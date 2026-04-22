@@ -775,12 +775,23 @@ function renderCalendarStrip() {
   if (!cal || !cal.length || !selectedMonth) { el.innerHTML = '<div style="text-align:center;color:var(--text-4);font-size:12px;padding:10px">캘린더 데이터가 없습니다</div>'; return; }
   const weeks = weeksInMonth(selectedMonth);
   if (!weeks.length) { el.innerHTML = ''; return; }
-  const entries = cal.filter(e => e.date && weekToMonth(dateStrToWeekId(e.date)) === selectedMonth);
+  // 실제 날짜의 YYYY-MM 또는 ISO 주차의 월, 둘 중 하나라도 selectedMonth에 해당하면 포함
+  const entries = cal.filter(e => {
+    if (!e.date) return false;
+    const actualMonth = e.date.slice(0, 7); // YYYY-MM from date string
+    const wid = dateStrToWeekId(e.date);
+    const weekMonth = wid ? weekToMonth(wid) : null;
+    return actualMonth === selectedMonth || weekMonth === selectedMonth;
+  });
   let html = '<div class="cal-weeks">' + weeks.map(w => `<div class="cal-week-label">${wLabel(w)}</div>`).join('') + '</div>';
+  if (!entries.length) {
+    html += '<div style="position:absolute;top:8px;right:0;font-size:11px;color:var(--text-4)">이 달에 발행 콘텐츠 없음</div>';
+  }
   entries.forEach(e => {
     const wid = dateStrToWeekId(e.date);
-    const idx = weeks.indexOf(wid);
-    if (idx < 0) return;
+    let idx = weeks.indexOf(wid);
+    // 주차가 이번 달에 없으면 가장 가까운 주차에 배치
+    if (idx < 0) { idx = wid < weeks[0] ? 0 : weeks.length - 1; }
     const left = ((idx + 0.5) / weeks.length * 100).toFixed(1);
     const chClass = e.channel === 'linkedin' ? 'cal-pin--li' : 'cal-pin--blog';
     html += `<div class="cal-pin ${chClass}" style="left:${left}%"><div class="cal-tooltip">${esc(e.title)} (${wLabel(wid)})</div></div>`;
