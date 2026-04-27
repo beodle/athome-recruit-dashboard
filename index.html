@@ -1281,6 +1281,38 @@ loadStorage();
 selectedMonth = latestMonth();
 checkStale();
 render();
+
+/* ── 콘텐츠 캘린더 시트 동기화 (athome-content-calendar와 동일 소스) ── */
+const CALENDAR_CSV_URL = 'https://docs.google.com/spreadsheets/d/1bnLQypIuMb0gw0RxzwYVkqGBdN8KSA4_TXSuogaOWak/export?format=csv&gid=658998951';
+function normalizeChannel(ch) {
+  const s = (ch || '').trim().toLowerCase();
+  if (s.includes('링크드') || s === 'linkedin') return 'linkedin';
+  if (s.includes('블로그') || s === 'blog') return 'blog';
+  if (s.includes('채용') || s.includes('recruit')) return 'recruit';
+  return s || 'other';
+}
+async function syncCalendarFromSheet() {
+  try {
+    const res = await fetch(CALENDAR_CSV_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const { data } = Papa.parse(text, { header: true, skipEmptyLines: true });
+    const events = data
+      .map(row => ({
+        date: (row['시기'] || '').trim(),
+        title: (row['주요 주제'] || '').trim(),
+        channel: normalizeChannel(row['채널']),
+        note: (row['비고'] || '').trim(),
+      }))
+      .filter(e => e.date && e.title);
+    if (!events.length) return;
+    allData['__calendar__'] = events;
+    render();
+  } catch (e) {
+    console.warn('[calendar sync] failed, using baked data:', e.message);
+  }
+}
+syncCalendarFromSheet();
 </script>
 </body>
 </html>
