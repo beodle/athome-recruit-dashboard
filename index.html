@@ -283,12 +283,6 @@ tbody tr:hover td { background:var(--bg-soft); }
     <div class="insight-bar" id="insightBar"></div>
   </section>
 
-  <!-- ═══ CALENDAR STRIP ═══ -->
-  <div class="cal-strip" id="calStrip">
-    <div class="cal-title">콘텐츠 발행 타임라인</div>
-    <div class="cal-timeline" id="calTimeline"></div>
-  </div>
-
   <!-- ═══ TAB BAR ═══ -->
   <div class="tab-bar">
     <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">전체 채널</button>
@@ -703,7 +697,6 @@ function destroyChart(id) { if(chartInstances[id]){chartInstances[id].destroy();
 function render() {
   renderMonthNav();
   renderExecSummary();
-  renderCalendarStrip();
   if (activeTab === 'overview') { renderOverviewChart(); renderContentROI(); }
   if (activeTab === 'li') { renderLiKpi(); renderLiChart(); renderLiTable(); closePostsSection(); }
   if (activeTab === 'ga4') { renderGa4Kpi(); renderGa4Funnel(); renderGa4Sources(); renderGa4Chart(); renderGa4Table(); }
