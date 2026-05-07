@@ -192,6 +192,7 @@ tbody tr:hover td { background:var(--bg-soft); }
 .ch-tag { font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; text-transform:uppercase; }
 .ch-tag--li { background:var(--accent-light); color:var(--accent); }
 .ch-tag--blog { background:rgba(124,58,237,.08); color:var(--blog-color); }
+.ch-tag--n { background:#EEF0F2; color:#666868; }
 
 /* ═══ DOUGHNUT ═══ */
 .doughnut-wrap { display:flex; align-items:center; gap:20px; }
@@ -656,23 +657,66 @@ function generateInsights(mo) {
   }).join(' · ');
 }
 
+/* ROI v2: 콘텐츠별 직접 측정값 매칭. 없으면 측정 불가(N/A) */
 function calcContentROI(mo) {
   const cal = allData['__calendar__'];
   if (!cal || !cal.length) return [];
+  const norm = s => String(s||'').toLowerCase()
+    .replace(/앳홈\s*블로그/g,'').replace(/편집본/g,'')
+    .replace(/[\[\]【】〈〉()（）·\-—–_/,，.。!?！？\s]/g,'');
+  const urlPath = u => {
+    if (!u) return '';
+    return String(u).replace(/^https?:\/\/[^\/]+/,'').replace(/\?.*$/,'').replace(/#.*$/,'').replace(/\/$/,'');
+  };
   return cal.filter(e => {
     if (!e.date) return false;
     const wid = dateStrToWeekId(e.date);
     return wid && weekToMonth(wid) === mo;
   }).map(entry => {
     const wid = dateStrToWeekId(entry.date);
-    const prev = getPrevWeek(wid);
-    let field, metricLabel;
-    if (entry.channel === 'linkedin') { field = 'impressions'; metricLabel = '노출'; }
-    else if (entry.channel === 'blog' || entry.channel === '블로그') { field = 'blog_pageviews'; metricLabel = '조회수'; }
-    else { field = 'users'; metricLabel = '방문자'; }
-    const cur = allData[wid]?.[field]||0, p = prev ? (allData[prev]?.[field]||0) : 0;
-    return { ...entry, weekId: wid, impact: cur - p, metricLabel };
-  }).sort((a,b) => b.impact - a.impact);
+    const ch = entry.channel;
+    const titleN = norm(entry.title);
+    let value = null, kind = 'na', metricLabel = '', detail = '게시물별 추적 데이터 없음';
+
+    if (ch === 'linkedin') {
+      metricLabel = '노출';
+      const posts = allData[wid]?.posts || [];
+      const m = posts.find(p => {
+        const pn = norm(p.title);
+        return pn && titleN && (pn.includes(titleN) || titleN.includes(pn));
+      });
+      if (m && m.impressions) {
+        value = m.impressions; kind = 'direct';
+        detail = `LinkedIn 게시물 직접 측정 (${m.date||''})`;
+      } else {
+        detail = posts.length ? '제목 매칭 실패' : 'LinkedIn 게시물 데이터 미업로드';
+      }
+    } else if (ch === 'blog' || ch === '블로그') {
+      metricLabel = '조회수';
+      const blogPosts = allData[wid]?.blog_posts || [];
+      const ePath = urlPath(entry.url);
+      const m = blogPosts.find(p => {
+        if (ePath && p.path && (p.path === ePath || p.path.endsWith(ePath))) return true;
+        const pn = norm(p.title);
+        return pn && titleN && (pn.includes(titleN) || titleN.includes(pn));
+      });
+      if (m && m.pageviews) {
+        value = m.pageviews; kind = 'direct';
+        detail = `블로그 글 직접 측정 (${m.path||''})`;
+      } else {
+        detail = blogPosts.length ? '제목·URL 매칭 실패' : '블로그 데이터 미업로드';
+      }
+    } else {
+      metricLabel = '';
+      detail = `'${ch}' 채널은 게시물별 추적 미지원`;
+    }
+
+    return { ...entry, weekId: wid, impact: value, kind, metricLabel, detail };
+  }).sort((a,b) => {
+    if (a.kind !== b.kind) return a.kind === 'direct' ? -1 : 1;
+    if (a.kind === 'direct') return (b.impact||0) - (a.impact||0);
+    return (a.date||'').localeCompare(b.date||'');
+  });
 }
 
 /* ══════════════════════════════════════════════════════
@@ -865,18 +909,30 @@ function renderContentROI() {
     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-4)">캘린더 데이터가 없거나 이 달에 발행된 콘텐츠가 없습니다</td></tr>`;
     return;
   }
+  const directCount = roi.filter(r => r.kind === 'direct').length;
   tbody.innerHTML = roi.map((r,i) => {
-    const rankCls = i<3 ? `roi-rank--${i+1}` : 'roi-rank--n';
-    const chTag = r.channel==='linkedin' ? 'ch-tag--li' : 'ch-tag--blog';
-    const impCls = r.impact>=0 ? 'roi-impact--up' : 'roi-impact--down';
-    return `<tr>
-      <td><span class="roi-rank ${rankCls}">${i+1}</span></td>
+    const isDirect = r.kind === 'direct';
+    const rankCls = (isDirect && i<3) ? `roi-rank--${i+1}` : 'roi-rank--n';
+    const chTag = r.channel==='linkedin' ? 'ch-tag--li'
+                : (r.channel==='blog'||r.channel==='블로그') ? 'ch-tag--blog'
+                : 'ch-tag--n';
+    const impHtml = isDirect
+      ? `<span class="roi-impact roi-impact--up">${fmt(r.impact)}</span> <span style="font-size:11px;color:var(--text-4)">${r.metricLabel}</span>`
+      : `<span style="font-size:12px;color:var(--text-4);font-style:italic" title="${esc(r.detail)}">— 측정 불가</span>`;
+    return `<tr style="${isDirect?'':'opacity:.6'}">
+      <td><span class="roi-rank ${rankCls}">${isDirect?(i+1):'·'}</span></td>
       <td style="font-weight:600;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(r.title)}">${esc(r.title)}</td>
-      <td><span class="ch-tag ${chTag}">${r.channel}</span></td>
+      <td><span class="ch-tag ${chTag}">${esc(r.channel)}</span></td>
       <td style="text-align:right"><span class="week-badge">${wLabel(r.weekId)}</span></td>
-      <td style="text-align:right"><span class="roi-impact ${impCls}">${r.impact>=0?'+':''}${fmt(r.impact)}</span> <span style="font-size:11px;color:var(--text-4)">${r.metricLabel}</span></td>
+      <td style="text-align:right">${impHtml}</td>
     </tr>`;
   }).join('');
+  if (directCount < roi.length) {
+    const note = `<tr><td colspan="5" style="padding:10px 14px;font-size:11px;color:var(--text-4);background:var(--bg-soft);border-top:1px solid var(--border)">
+      직접 측정 ${directCount}건 · 측정 불가 ${roi.length-directCount}건 — LinkedIn Posts/블로그 분석 CSV를 ⚙ 설정에서 업로드하면 측정 범위가 확장됩니다.
+    </td></tr>`;
+    tbody.insertAdjacentHTML('beforeend', note);
+  }
 }
 
 /* ── LinkedIn Tab ── */
@@ -1301,6 +1357,7 @@ async function syncCalendarFromSheet() {
         title: (row['주요 주제'] || '').trim(),
         channel: normalizeChannel(row['채널']),
         note: (row['비고'] || '').trim(),
+        url: (row['URL'] || row['url'] || row['링크'] || '').trim(),
       }))
       .filter(e => e.date && e.title);
     if (!events.length) return;
