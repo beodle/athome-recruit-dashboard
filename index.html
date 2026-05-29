@@ -22,11 +22,11 @@
   --text-3: #666868;
   --text-4: #AFB5C2;
   --bg-white: #FFFFFF;
-  --bg-soft: #F2F2F0;
-  --bg-page: #EDEDEB;
-  --bg-gray: #E3E4E0;
-  --border: #E0E0DE;
-  --border-2: #D3D3D3;
+  --bg-soft: #F4F2EE;
+  --bg-page: #F5F4F1;
+  --bg-gray: #E9E6E0;
+  --border: #ECEAE5;
+  --border-2: #DAD6CF;
   --li-color: #FF5D00;
   --ga4-color: #0057FF;
   --blog-color: #7C3AED;
@@ -38,6 +38,11 @@
   --up: #16A34A; --up-bg: #F0FDF4;
   --down: #DC2626; --down-bg: #FFF1F1;
   --radius: 12px;
+  --radius-lg: 14px;
+  --sidebar: #1A1A1A;
+  --sidebar-w: 250px;
+  --topbar-h: 60px;
+  --shadow-card: 0 1px 2px rgba(40,30,20,.04), 0 6px 20px rgba(40,30,20,.05);
   --font: 'Pretendard Variable','Pretendard',-apple-system,sans-serif;
 }
 
@@ -46,8 +51,22 @@
 body { font-family:var(--font); font-size:14px; color:var(--text-1); background:var(--bg-page); -webkit-font-smoothing:antialiased; letter-spacing:-.01em; }
 
 /* ═══ LAYOUT ═══ */
-.container { max-width:1280px; margin:0 auto; padding:20px 24px; }
-.card { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); }
+.container { width:100%; max-width:1200px; margin:0 auto; padding:24px 28px 56px; }
+.card { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-card); }
+
+/* ═══ SAAS SHELL ═══ */
+.shell { display:grid; grid-template-columns:var(--sidebar-w) 1fr; min-height:100vh; }
+.main-col { display:flex; flex-direction:column; min-width:0; }
+.sidebar { background:var(--sidebar); position:sticky; top:0; height:100vh; display:flex; flex-direction:column; padding:22px 14px 16px; gap:6px; }
+.sb-brand { display:flex; align-items:center; gap:10px; padding:2px 10px 18px; }
+.sb-logo img { height:15px; filter:invert(1); display:block; }
+.sb-brand-sub { font-size:12px; font-weight:700; color:#7C7A74; letter-spacing:.02em; }
+.sb-nav-label { font-size:10px; font-weight:700; color:#615F59; text-transform:uppercase; letter-spacing:.1em; padding:0 12px 6px; }
+.sb-actions { margin-top:auto; display:flex; flex-direction:column; gap:7px; padding:14px 8px 4px; border-top:1px solid #2C2C2A; }
+.topbar { position:sticky; top:0; z-index:50; height:var(--topbar-h); display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 28px; background:rgba(245,244,241,.82); backdrop-filter:saturate(180%) blur(10px); -webkit-backdrop-filter:saturate(180%) blur(10px); border-bottom:1px solid var(--border); }
+.topbar-title { font-size:15px; font-weight:800; color:var(--text-1); letter-spacing:-.02em; }
+/* 상단 바는 '전체 채널' 탭에서만 노출 */
+.shell:not(:has(.tab-btn.active[data-tab="overview"])) .topbar { display:none; }
 .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
 .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; }
 .hidden { display:none !important; }
@@ -55,24 +74,20 @@ body { font-family:var(--font); font-size:14px; color:var(--text-1); background:
 .mb-16 { margin-bottom:16px; }
 .p-20 { padding:20px; }
 
-/* ═══ HEADER ═══ */
-#header { background:var(--dark); position:sticky; top:0; z-index:100; padding:12px 24px; }
-.hdr { max-width:1280px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.hdr-left { display:flex; align-items:center; gap:16px; }
-.hdr-logo img { height:14px; filter:invert(1); display:block; }
-.hdr-title { font-size:15px; font-weight:700; color:#fff; }
-.hdr-right { display:flex; align-items:center; gap:8px; }
-.month-nav { display:flex; align-items:center; gap:2px; background:#2A2A2A; border:1px solid #3A3A3A; border-radius:8px; padding:3px 4px; }
-.mn-btn { background:none; border:none; cursor:pointer; color:#fff; font-size:15px; padding:3px 8px; border-radius:4px; transition:background .15s; }
-.mn-btn:hover:not(:disabled) { background:rgba(255,255,255,.1); }
+/* ═══ TOPBAR CONTROLS (light) ═══ */
+.month-nav { display:flex; align-items:center; gap:2px; background:var(--bg-white); border:1px solid var(--border); border-radius:9px; padding:3px 4px; box-shadow:0 1px 2px rgba(40,30,20,.04); }
+.mn-btn { background:none; border:none; cursor:pointer; color:var(--text-2); font-size:15px; padding:3px 9px; border-radius:6px; transition:background .15s; }
+.mn-btn:hover:not(:disabled) { background:var(--bg-gray); }
 .mn-btn:disabled { opacity:.3; cursor:default; }
-#monthLabel { font-size:13px; font-weight:700; color:#fff; min-width:80px; text-align:center; }
-.btn-icon { background:none; border:1px solid #3A3A3A; border-radius:8px; padding:6px 10px; cursor:pointer; color:#ccc; font-size:14px; transition:all .15s; }
-.btn-icon:hover { background:#2A2A2A; color:#fff; }
-.btn-sm { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:7px 14px; font-size:12px; font-weight:700; cursor:pointer; transition:opacity .15s; }
-.btn-sm:hover { opacity:.85; }
-.btn-ghost { background:transparent; color:#ccc; border:1px solid #3A3A3A; border-radius:8px; padding:7px 14px; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
-.btn-ghost:hover { background:#2A2A2A; color:#fff; }
+#monthLabel { font-size:13px; font-weight:800; color:var(--text-1); min-width:90px; text-align:center; }
+
+/* ═══ SIDEBAR ACTION BUTTONS (dark) ═══ */
+.btn-sm { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:9px 12px; font-size:12.5px; font-weight:700; cursor:pointer; transition:opacity .15s; text-align:center; }
+.btn-sm:hover { opacity:.88; }
+.btn-ghost { background:transparent; color:#C9C7C2; border:1px solid #353532; border-radius:8px; padding:9px 12px; font-size:12.5px; font-weight:600; cursor:pointer; transition:all .15s; text-align:center; }
+.btn-ghost:hover { background:#262624; color:#fff; }
+.btn-icon { background:transparent; border:1px solid #353532; border-radius:8px; padding:8px 10px; cursor:pointer; color:#C9C7C2; font-size:13px; font-weight:600; transition:all .15s; text-align:center; }
+.btn-icon:hover { background:#262624; color:#fff; }
 
 /* Stale banner */
 .stale-banner { background:#FEF3C7; border-bottom:1px solid #FDE68A; padding:6px 24px; font-size:12px; color:#92400E; text-align:center; display:none; }
@@ -80,8 +95,8 @@ body { font-family:var(--font); font-size:14px; color:var(--text-1); background:
 /* ═══ EXECUTIVE SUMMARY ═══ */
 .exec { margin-bottom:20px; }
 .exec-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:12px; }
-.exec-card { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; position:relative; transition:box-shadow .15s; }
-.exec-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.06); }
+.exec-card { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px 20px; position:relative; box-shadow:var(--shadow-card); transition:box-shadow .15s, transform .15s; }
+.exec-card:hover { box-shadow:0 4px 18px rgba(40,30,20,.08); transform:translateY(-1px); }
 .exec-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:var(--radius) var(--radius) 0 0; }
 .exec-card--up::before { background:var(--up); }
 .exec-card--down::before { background:var(--down); }
@@ -115,20 +130,28 @@ body { font-family:var(--font); font-size:14px; color:var(--text-1); background:
 /* ═══ TABS ═══ */
 .section-label { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:.08em; margin:0 0 10px; }
 .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
-.tab-bar { display:flex; gap:4px; background:#1A1A1A; border-radius:10px; padding:6px; margin-bottom:20px; }
-.tab-btn { background:none; border:none; border-radius:7px; padding:11px 18px; font-size:13px; font-weight:700; color:#9AA0A6; cursor:pointer; transition:background .15s, color .15s; white-space:nowrap; }
-.tab-btn:hover { color:#FFFFFF; background:rgba(255,255,255,.06); }
-.tab-btn.active { background:#FFFFFF; }
-.tab-btn.active[data-tab="overview"] { color:var(--accent); }
-.tab-btn.active[data-tab="li"] { color:var(--li-color); }
-.tab-btn.active[data-tab="ga4"] { color:var(--ga4-color); }
-.tab-btn.active[data-tab="blog"] { color:var(--blog-color); }
-.tab-btn.active[data-tab="calendar"] { color:var(--accent); }
+/* ═══ SIDEBAR NAV ═══ */
+.tab-bar { display:flex; flex-direction:column; gap:3px; }
+.tab-btn { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:none; border:none; border-left:3px solid transparent; padding:10px 11px; border-radius:8px; font-size:13.5px; font-weight:600; color:#9A988F; cursor:pointer; transition:background .15s, color .15s; white-space:nowrap; }
+.tab-btn:hover { background:rgba(255,255,255,.05); color:#E8E6E0; }
+.tab-btn .nav-dot { width:7px; height:7px; border-radius:50%; background:currentColor; opacity:.5; flex-shrink:0; }
+.tab-btn.active { background:rgba(255,255,255,.07); color:#fff; font-weight:700; }
+.tab-btn.active .nav-dot { opacity:1; }
+.tab-btn.active[data-tab="overview"] { border-left-color:var(--accent); }
+.tab-btn.active[data-tab="overview"] .nav-dot { background:var(--accent); }
+.tab-btn.active[data-tab="li"] { border-left-color:var(--li-color); }
+.tab-btn.active[data-tab="li"] .nav-dot { background:var(--li-color); }
+.tab-btn.active[data-tab="ga4"] { border-left-color:var(--ga4-color); }
+.tab-btn.active[data-tab="ga4"] .nav-dot { background:var(--ga4-color); }
+.tab-btn.active[data-tab="blog"] { border-left-color:var(--blog-color); }
+.tab-btn.active[data-tab="blog"] .nav-dot { background:var(--blog-color); }
+.tab-btn.active[data-tab="calendar"] { border-left-color:var(--accent); }
+.tab-btn.active[data-tab="calendar"] .nav-dot { background:var(--accent); }
 
 /* ═══ KPI CARDS ═══ */
 .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
-.kpi-card { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; position:relative; overflow:hidden; transition:box-shadow .15s; }
-.kpi-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.06); }
+.kpi-card { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px 20px; position:relative; overflow:hidden; box-shadow:var(--shadow-card); transition:box-shadow .15s, transform .15s; }
+.kpi-card:hover { box-shadow:0 4px 18px rgba(40,30,20,.08); transform:translateY(-1px); }
 .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--kpi-bar,var(--border)); }
 .kpi-card--up { --kpi-bar:var(--up); }
 .kpi-card--down { --kpi-bar:var(--down); }
@@ -225,11 +248,25 @@ tbody tr:hover td { background:var(--bg-soft); }
 ::-webkit-scrollbar-thumb { background:var(--border-2); border-radius:3px; }
 
 /* ═══ RESPONSIVE ═══ */
+@media(max-width:900px) {
+  .shell { grid-template-columns:1fr; }
+  .sidebar { position:static; height:auto; flex-direction:row; flex-wrap:wrap; align-items:center; gap:8px 12px; padding:12px 16px; }
+  .sb-brand { padding:0 6px 0 2px; }
+  .sb-nav-label { display:none; }
+  .tab-bar { flex-direction:row; flex-wrap:wrap; gap:4px; flex:1 1 240px; }
+  .tab-btn { width:auto; border-left:none; border-bottom:3px solid transparent; padding:7px 12px; }
+  .tab-btn.active { border-left:none; }
+  .tab-btn.active[data-tab="overview"] { border-bottom-color:var(--accent); }
+  .tab-btn.active[data-tab="li"] { border-bottom-color:var(--li-color); }
+  .tab-btn.active[data-tab="ga4"] { border-bottom-color:var(--ga4-color); }
+  .tab-btn.active[data-tab="blog"] { border-bottom-color:var(--blog-color); }
+  .tab-btn.active[data-tab="calendar"] { border-bottom-color:var(--accent); }
+  .sb-actions { margin-top:0; flex-direction:row; border-top:none; padding:0; }
+  .topbar { padding:0 16px; }
+}
 @media(max-width:768px) {
   .exec-grid,.kpi-grid { grid-template-columns:repeat(2,1fr); }
   .grid-2,.grid-3 { grid-template-columns:1fr; }
-  .hdr { flex-wrap:wrap; gap:8px; }
-  .hdr-right { width:100%; justify-content:space-between; }
   .cal-strip { overflow-x:auto; }
   .exec-val,.kpi-value { font-size:26px; }
   .card { overflow-x:auto; }
@@ -243,9 +280,11 @@ tbody tr:hover td { background:var(--bg-soft); }
 
 /* ═══ PRINT ═══ */
 @media print {
-  #header,.btn-sm,.btn-ghost,.btn-icon,.tab-btn[data-tab="upload"],.stale-banner { display:none; }
+  .sidebar,.topbar,.btn-sm,.btn-ghost,.btn-icon,.stale-banner { display:none; }
+  .shell { display:block; }
+  .container { max-width:none; padding:12px; }
   body { background:#fff; }
-  .card { break-inside:avoid; border:1px solid #ddd; }
+  .card { break-inside:avoid; border:1px solid #ddd; box-shadow:none; }
 }
 
 /* ═══ ANIMATION ═══ */
@@ -258,28 +297,44 @@ tbody tr:hover td { background:var(--bg-soft); }
 <!-- STALE DATA BANNER -->
 <div class="stale-banner" id="staleBanner"></div>
 
-<!-- HEADER -->
-<header id="header">
-  <div class="hdr">
-    <div class="hdr-left">
-      <div class="hdr-logo"><img src="https://raw.githubusercontent.com/beodle/athome-assets/main/ATHOME_CI_screen.svg" alt="ATHOME"></div>
-      <span class="hdr-title">채용 콘텐츠 대시보드</span>
+<div class="shell">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo"><img src="https://raw.githubusercontent.com/beodle/athome-assets/main/ATHOME_CI_screen.svg" alt="ATHOME"></div>
+      <span class="sb-brand-sub">채용 콘텐츠</span>
     </div>
-    <div class="hdr-right">
+    <div class="sb-nav-label">채널</div>
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')"><span class="nav-dot"></span>전체 채널</button>
+      <button class="tab-btn" data-tab="li" onclick="switchTab('li')"><span class="nav-dot"></span>LinkedIn</button>
+      <button class="tab-btn" data-tab="ga4" onclick="switchTab('ga4')"><span class="nav-dot"></span>채용 페이지</button>
+      <button class="tab-btn" data-tab="blog" onclick="switchTab('blog')"><span class="nav-dot"></span>팀 블로그</button>
+      <button class="tab-btn" data-tab="calendar" onclick="switchTab('calendar')"><span class="nav-dot"></span>콘텐츠 캘린더</button>
+    </nav>
+    <div class="sb-actions">
+      <button class="btn-sm" onclick="openInputModal()">+ 직접 입력</button>
+      <button class="btn-ghost" onclick="exportWithData()">↓ 내보내기</button>
+      <button class="btn-icon" onclick="openSettings()" title="설정">⚙ 설정</button>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN COLUMN ═══ -->
+  <div class="main-col">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-title">채용 콘텐츠 대시보드</div>
       <div class="month-nav">
         <button class="mn-btn" id="prevMonthBtn" onclick="prevMonth()">←</button>
         <span id="monthLabel">—</span>
         <button class="mn-btn" id="nextMonthBtn" onclick="nextMonth()">→</button>
       </div>
-      <button class="btn-ghost" onclick="exportWithData()">↓ 내보내기</button>
-      <button class="btn-sm" onclick="openInputModal()">+ 직접 입력</button>
-      <button class="btn-icon" onclick="openSettings()" title="설정">⚙</button>
-    </div>
-  </div>
-</header>
+    </header>
 
-<!-- MAIN -->
-<main class="container">
+    <!-- MAIN -->
+    <main class="container">
 
   <!-- ═══ EXECUTIVE SUMMARY ═══ -->
   <section class="exec" id="execSection">
@@ -287,16 +342,6 @@ tbody tr:hover td { background:var(--bg-soft); }
     <div class="exec-grid" id="execGrid"></div>
     <div class="insight-bar" id="insightBar"></div>
   </section>
-
-  <!-- ═══ TAB BAR ═══ -->
-  <div class="section-label" style="margin-top:8px">채널별 상세</div>
-  <div class="tab-bar">
-    <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">전체 채널</button>
-    <button class="tab-btn" data-tab="li" onclick="switchTab('li')">LinkedIn</button>
-    <button class="tab-btn" data-tab="ga4" onclick="switchTab('ga4')">채용 페이지</button>
-    <button class="tab-btn" data-tab="blog" onclick="switchTab('blog')">팀 블로그</button>
-    <button class="tab-btn" data-tab="calendar" onclick="switchTab('calendar')">콘텐츠 캘린더</button>
-  </div>
 
   <!-- ═══ TAB: OVERVIEW ═══ -->
   <div id="tab-overview" class="fade-in">
@@ -455,7 +500,9 @@ tbody tr:hover td { background:var(--bg-soft); }
       </div>
     </div>
   </div>
-</main>
+    </main>
+  </div>
+</div>
 
 <!-- ═══ SETTINGS MODAL ═══ -->
 <div id="settingsModal" class="modal-overlay hidden" onclick="if(event.target===this)closeSettings()">
