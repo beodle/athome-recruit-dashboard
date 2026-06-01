@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>앳홈 채용 콘텐츠 대시보드</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231A1A1A'/><rect x='12' y='55' width='18' height='33' rx='4' fill='%23FF5D00'/><rect x='41' y='35' width='18' height='53' rx='4' fill='%23FF5D00'/><rect x='70' y='18' width='18' height='70' rx='4' fill='%23FF5D00'/></svg>">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --accent:#FF5D00; --accent-light:rgba(255,93,0,.08); --accent-mid:rgba(255,93,0,.16);
+  --dark:#1A1A1A; --text-1:#1A1714; --text-2:#4A4540; --text-3:#6B6660; --text-4:#A8A29A;
+  --bg-page:#F5F4F1; --bg-card:#FFFFFF; --bg-soft:#F0EEE9; --bg-gray:#E9E6E0;
+  --border:#ECEAE5; --border-2:#DAD6CF;
+  --li:#FF5D00; --ga4:#0057FF; --blog:#7C3AED;
+  --up:#16A34A; --down:#DC2626;
+  --radius:12px;
+  --shadow:0 1px 2px rgba(40,30,20,.03),0 3px 14px rgba(40,30,20,.035);
+  --font:'Pretendard Variable',Pretendard,-apple-system,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);font-size:14px;color:var(--text-1);background:var(--bg-page);-webkit-font-smoothing:antialiased;letter-spacing:-.006em;line-height:1.6;}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px 64px;}
+.stale{background:#FEF3C7;border-bottom:1px solid #FDE68A;padding:6px 24px;font-size:12px;color:#92400E;text-align:center;display:none;}
+
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:60;background:rgba(245,244,241,.85);backdrop-filter:saturate(180%) blur(10px);-webkit-backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--border);}
+.topbar-in{max-width:1120px;margin:0 auto;padding:13px 24px;display:flex;align-items:center;gap:14px;}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.brand img{height:15px;display:block;}
+.brand b{font-size:15px;font-weight:800;letter-spacing:-.02em;}
+.brand .sep{width:1px;height:16px;background:var(--border-2);}
+.brand span{font-size:13px;font-weight:700;color:var(--text-3);}
+.spacer{flex:1;}
+.actions{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.btn{border:1px solid var(--border-2);background:var(--bg-card);color:var(--text-2);border-radius:9px;padding:8px 12px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .14s;white-space:nowrap;}
+.btn:hover{border-color:var(--text-4);color:var(--text-1);}
+.btn--primary{background:var(--accent);color:#fff;border-color:transparent;font-weight:700;}
+.btn--primary:hover{opacity:.9;color:#fff;}
+.btn--icon{padding:8px 11px;}
+
+/* ── RANGE FILTER ── */
+.range{position:relative;display:flex;align-items:center;gap:3px;}
+.range-nav{background:var(--bg-card);border:1px solid var(--border-2);border-radius:8px;color:var(--text-2);width:30px;height:34px;cursor:pointer;font-size:15px;transition:all .14s;}
+.range-nav:hover:not(:disabled){background:var(--bg-gray);}
+.range-nav:disabled{opacity:.3;cursor:default;}
+.range-trigger{display:inline-flex;align-items:center;gap:7px;background:var(--bg-card);border:1px solid var(--border-2);border-radius:9px;padding:7px 13px;font-family:inherit;font-size:13px;font-weight:700;color:var(--text-1);cursor:pointer;transition:border-color .14s;white-space:nowrap;}
+.range-trigger:hover{border-color:var(--text-4);}
+.range-caret{color:var(--text-4);font-size:10px;}
+.range-menu{position:absolute;top:calc(100% + 7px);right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:13px;box-shadow:0 14px 40px rgba(40,30,20,.16);padding:7px;min-width:216px;z-index:120;display:none;}
+.range-menu.open{display:block;}
+.range-menu button[data-range]{display:block;width:100%;text-align:left;background:none;border:none;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer;}
+.range-menu button[data-range]:hover{background:var(--bg-soft);}
+.range-menu button[data-range].on{background:var(--bg-soft);color:var(--text-1);font-weight:700;}
+.range-custom{border-top:1px solid var(--border);margin-top:7px;padding:11px 8px 4px;}
+.range-custom label{display:block;font-size:10px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;}
+.range-custom .row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-4);}
+.range-custom input{flex:1;min-width:0;border:1px solid var(--border-2);border-radius:8px;padding:7px;font-family:inherit;font-size:12px;color:var(--text-1);background:var(--bg-card);}
+.range-apply{width:100%;margin-top:9px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;}
+
+/* ── SECTIONS ── */
+.sec{margin-top:48px;}
+.sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:18px;}
+.sec-no{font-size:12px;font-weight:700;color:var(--text-4);letter-spacing:.08em;}
+.sec-title{font-size:19px;font-weight:800;letter-spacing:-.03em;}
+.sec-desc{font-size:12.5px;color:var(--text-4);font-weight:500;}
+.card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow);}
+.pad{padding:22px 24px;}
+.mb{margin-bottom:14px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.card-h{display:flex;align-items:baseline;gap:8px;margin-bottom:18px;}
+.card-h .dot{display:none;}
+.card-h .t{font-size:14px;font-weight:700;color:var(--text-1);}
+.card-h .sub{font-size:11.5px;color:var(--text-4);font-weight:500;margin-left:auto;}
+
+/* ── KPI ── */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.kpi{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;transition:transform .14s,box-shadow .14s;}
+.kpi:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(40,30,20,.06);}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.kpi-label{font-size:11.5px;font-weight:600;color:var(--text-3);}
+.kpi-val{font-size:31px;font-weight:800;letter-spacing:-.04em;line-height:1.05;}
+.kpi-sub{font-size:11.5px;color:var(--text-4);margin:5px 0 10px;}
+.cmp{font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px;}
+.cmp.up{color:var(--up);} .cmp.down{color:var(--down);} .cmp.flat{color:var(--text-4);}
+
+/* ── CHART ── */
+.chart-box{position:relative;height:240px;}
+.empty{text-align:center;color:var(--text-4);font-size:13px;padding:32px 0;}
+
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:11px;font-weight:700;color:var(--text-3);letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:10px;font-size:13px;color:var(--text-2);border-bottom:1px solid var(--border);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--bg-soft);}
+.wbadge{display:inline-block;font-size:11px;font-weight:800;background:var(--bg-gray);color:var(--text-2);border-radius:5px;padding:2px 8px;}
+.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;background:var(--bg-soft);color:var(--text-3);}
+.up-i{color:var(--up);font-size:10px;font-weight:700;margin-left:3px;} .down-i{color:var(--down);font-size:10px;font-weight:700;margin-left:3px;}
+.ell{max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ── ACCORDION ── */
+.acc{margin-top:12px;border-top:1px solid var(--border);}
+.acc-btn{width:100%;text-align:left;background:none;border:none;padding:12px 2px 0;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--text-3);cursor:pointer;display:flex;align-items:center;gap:6px;}
+.acc-btn:hover{color:var(--text-1);}
+.acc-btn .ar{transition:transform .18s;font-size:10px;}
+.acc.open .acc-btn .ar{transform:rotate(90deg);}
+.acc-body{display:none;padding-top:12px;}
+.acc.open .acc-body{display:block;}
+
+/* ── FUNNEL ── */
+.funnel-row{padding:5px 0;}
+.funnel-arrow{font-size:12px;color:var(--text-4);padding:3px 0 3px 10px;}
+.funnel-cvr{font-weight:700;color:var(--text-3);margin-left:4px;}
+.funnel-bg{height:26px;background:var(--bg-soft);border-radius:6px;overflow:hidden;}
+.funnel-bar{height:100%;border-radius:6px;transition:width .5s ease;}
+.funnel-meta{display:flex;align-items:center;gap:10px;margin-top:5px;}
+.funnel-label{font-size:13px;font-weight:700;min-width:74px;}
+.funnel-count{font-size:15px;font-weight:800;margin-left:auto;}
+.funnel-unit{font-size:11px;font-weight:400;color:var(--text-4);}
+
+/* ── DOUGHNUT ── */
+.dough-wrap{display:flex;align-items:center;gap:18px;}
+.dough-c{width:130px;height:130px;flex-shrink:0;}
+.dough-legend{flex:1;min-width:0;}
+.dough-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;gap:8px;}
+.dough-row:last-child{border-bottom:none;}
+.ldot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* ── QUALITY ── */
+.q-big{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1;}
+.chip{display:inline-block;background:var(--bg-soft);color:var(--text-2);font-size:12px;font-weight:600;padding:4px 11px;border-radius:14px;margin:0 6px 6px 0;}
+.sa-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.subt{font-size:11px;font-weight:700;color:var(--text-3);letter-spacing:.05em;margin-bottom:8px;}
+
+/* ── MODAL ── */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:200;padding:16px;}
+.ov.open{display:flex;}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;padding:26px;}
+.modal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.modal-h h2{font-size:17px;font-weight:800;}
+.x{background:none;border:none;font-size:20px;color:var(--text-3);cursor:pointer;}
+.field{margin-bottom:8px;} .field label{display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:4px;}
+.inp{width:100%;border:1px solid var(--border-2);border-radius:8px;padding:8px 11px;font-size:13px;font-family:inherit;color:var(--text-1);background:#fff;outline:none;}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,93,0,.1);}
+.fgrid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;} .fgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.minihead{font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px;}
+.drop{border:2px dashed var(--border-2);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:all .14s;}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-light);}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1A1A1A;color:#fff;padding:11px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:300;}
+.toast.show{opacity:1;}
+
+@media(max-width:820px){
+  .kpis{grid-template-columns:repeat(2,1fr);} .grid2{grid-template-columns:1fr;}
+  .topbar-in{flex-wrap:wrap;} .brand span{display:none;}
+}
+@media print{ .topbar,.btn,.acc-btn{display:none;} .card,.kpi{box-shadow:none;break-inside:avoid;} body{background:#fff;} }
+</style>
+</head>
+<body>
+<div class="stale" id="stale"></div>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <img src="https://raw.githubusercontent.com/beodle/athome-assets/main/ATHOME_CI_screen.svg" alt="ATHOME" style="filter:none">
+      <b>채용 콘텐츠</b><div class="sep"></div><span>성과 대시보드</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="range">
+      <button class="range-nav" id="prevBtn" onclick="shiftRange(-1)" title="이전 기간">←</button>
+      <button class="range-trigger" onclick="toggleRange(event)">📅 <span id="rangeLabel">—</span> <span class="range-caret">▾</span></button>
+      <button class="range-nav" id="nextBtn" onclick="shiftRange(1)" title="다음 기간">→</button>
+      <div class="range-menu" id="rangeMenu" onclick="event.stopPropagation()">
+        <button data-range="4w" onclick="setRange('4w')">최근 4주</button>
+        <button data-range="8w" onclick="setRange('8w')">최근 8주</button>
+        <button data-range="12w" onclick="setRange('12w')">최근 12주</button>
+        <button data-range="all" onclick="setRange('all')">전체 기간</button>
+        <div class="range-custom">
+          <label>사용자 지정</label>
+          <div class="row"><input type="date" id="cStart"> ~ <input type="date" id="cEnd"></div>
+          <button class="range-apply" onclick="applyCustom()">적용</button>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="exportWithData()">↓ 내보내기</button>
+      <button class="btn btn--primary" onclick="openInput()">+ 직접 입력</button>
+      <button class="btn btn--icon" onclick="openSettings()" title="설정">⚙</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ① 인지 -->
+  <section class="sec" id="secAwareness">
+    <div class="sec-head"><span class="sec-no">01</span><span class="sec-title">인지</span><span class="sec-desc">채용 브랜딩이 자라고 있나</span></div>
+    <div class="kpis mb" id="awKpis"></div>
+    <div class="card pad">
+      <div class="card-h"><div class="dot" style="background:var(--accent)"></div><span class="t">인지 성장 추세 — 노출 · 블로그 조회 · 팔로워</span></div>
+      <div class="chart-box" id="awChartBox"><canvas id="awChart"></canvas></div>
+      <div class="empty" id="awEmpty" style="display:none">이 기간에 데이터가 없습니다</div>
+      <div class="acc" id="accAware">
+        <button class="acc-btn" onclick="toggleAcc('accAware')"><span class="ar">▶</span> 채널별 주차 상세</button>
+        <div class="acc-body" id="awDetail"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② 콘텐츠 기여 -->
+  <section class="sec">
+    <div class="sec-head"><span class="sec-no">02</span><span class="sec-title">콘텐츠 기여</span><span class="sec-desc">무엇이 먹혔나 → 다음 액션</span></div>
+    <div class="card pad mb">
+      <div class="card-h"><div class="dot" style="background:var(--accent)"></div><span class="t">게시물 성과 랭킹</span><span class="sub" id="rankSub"></span></div>
+      <table>
+        <thead><tr><th>채널</th><th>게시물</th><th style="text-align:right">날짜</th><th style="text-align:right">대표 지표</th><th style="text-align:right">반응·체류</th><th style="text-align:right">등급</th></tr></thead>
+        <tbody id="rankBody"></tbody>
+      </table>
+    </div>
+    <div class="card pad mb" id="saCard" style="display:none">
+      <div class="card-h"><div class="dot" style="background:var(--li)"></div><span class="t">이번 기간 잘 먹힌 콘텐츠</span><span class="sub">LinkedIn 분석</span></div>
+      <div class="grid2" id="saBox"></div>
+    </div>
+    <div class="card pad">
+      <div class="card-h"><div class="dot" style="background:var(--accent)"></div><span class="t">발행 콘텐츠 ↔ 영향도</span><span class="sub" id="roiSub"></span></div>
+      <table>
+        <thead><tr><th>콘텐츠</th><th>채널</th><th style="text-align:right">발행 주차</th><th style="text-align:right">영향도</th></tr></thead>
+        <tbody id="roiBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ③ 전환·품질 -->
+  <section class="sec">
+    <div class="sec-head"><span class="sec-no">03</span><span class="sec-title">전환 · 품질</span><span class="sec-desc">인입 흐름과 트래픽의 결</span></div>
+    <div class="grid2 mb">
+      <div class="card pad">
+        <div class="card-h"><div class="dot" style="background:var(--ga4)"></div><span class="t">채용 퍼널 (지원까지)</span></div>
+        <div id="funnel"></div>
+      </div>
+      <div class="card pad">
+        <div class="card-h"><div class="dot" style="background:var(--up)"></div><span class="t">유입 품질 — 블로그 평균 체류</span></div>
+        <div id="quality"></div>
+      </div>
+    </div>
+    <div class="card pad">
+      <div class="card-h"><div class="dot" style="background:var(--ga4)"></div><span class="t">유입 출처</span><span class="sub">채용 페이지 · 전체 기간</span></div>
+      <div class="dough-wrap"><div class="dough-c"><canvas id="srcChart"></canvas></div><div class="dough-legend" id="srcLegend"></div></div>
+      <div class="acc" id="accSrc">
+        <button class="acc-btn" onclick="toggleAcc('accSrc')"><span class="ar">▶</span> 전체 유입 출처</button>
+        <div class="acc-body" id="srcDetail"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- INPUT MODAL -->
+<div class="ov" id="inputModal" onclick="if(event.target===this)closeInput()">
+  <div class="modal">
+    <div class="modal-h"><h2>주간 데이터 입력</h2><button class="x" onclick="closeInput()">✕</button></div>
+    <div class="field"><label>주차 <span style="color:var(--text-4);font-weight:400">(예: 2026-W22)</span></label><input class="inp" id="iWeek" placeholder="YYYY-Www"></div>
+    <div class="minihead">LinkedIn</div>
+    <div class="fgrid2">
+      <div class="field"><label>노출</label><input class="inp" type="number" id="iImp" min="0"></div>
+      <div class="field"><label>클릭</label><input class="inp" type="number" id="iClicks" min="0"></div>
+      <div class="field"><label>좋아요</label><input class="inp" type="number" id="iLikes" min="0"></div>
+      <div class="field"><label>댓글</label><input class="inp" type="number" id="iComments" min="0"></div>
+      <div class="field"><label>공유</label><input class="inp" type="number" id="iShares" min="0"></div>
+      <div class="field"><label>LI 방문</label><input class="inp" type="number" id="iLiVis" min="0"></div>
+      <div class="field"><label>총 팔로워</label><input class="inp" type="number" id="iFollowers" min="0"></div>
+      <div class="field"><label>신규 팔로워</label><input class="inp" type="number" id="iNewFol" min="0"></div>
+    </div>
+    <div class="minihead">채용 페이지 (GA4)</div>
+    <div class="fgrid3">
+      <div class="field"><label>방문자</label><input class="inp" type="number" id="iUsers" min="0"></div>
+      <div class="field"><label>세션</label><input class="inp" type="number" id="iSessions" min="0"></div>
+      <div class="field"><label>페이지뷰</label><input class="inp" type="number" id="iPv" min="0"></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:14px;border-top:1px solid var(--border);margin-top:8px">
+      <button class="btn" onclick="closeInput()">취소</button>
+      <button class="btn btn--primary" onclick="saveWeek()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="ov" id="settingsModal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <div class="modal-h"><h2>설정 · 데이터 관리</h2><button class="x" onclick="closeSettings()">✕</button></div>
+    <div class="fgrid3">
+      <div>
+        <div class="subt" style="color:var(--li)">LinkedIn</div>
+        <div class="drop" id="dzLi" onclick="document.getElementById('fLi').click()" ondragover="dzOver(event,'dzLi')" ondragleave="dzLeave(event,'dzLi')" ondrop="dzDrop(event,'linkedin')"><div style="font-size:18px">📎</div><div style="font-size:11px;color:var(--text-3)">XLS·XLSX·CSV</div></div>
+        <input type="file" id="fLi" accept=".csv,.xls,.xlsx" style="display:none" onchange="onFile(event,'linkedin')"><div id="stLi" style="font-size:11px;color:var(--text-3);margin-top:6px;min-height:14px"></div>
+      </div>
+      <div>
+        <div class="subt" style="color:var(--ga4)">GA4</div>
+        <div class="drop" id="dzGa" onclick="document.getElementById('fGa').click()" ondragover="dzOver(event,'dzGa')" ondragleave="dzLeave(event,'dzGa')" ondrop="dzDrop(event,'ga4')"><div style="font-size:18px">📎</div><div style="font-size:11px;color:var(--text-3)">CSV</div></div>
+        <input type="file" id="fGa" accept=".csv,.xls,.xlsx" style="display:none" onchange="onFile(event,'ga4')"><div id="stGa" style="font-size:11px;color:var(--text-3);margin-top:6px;min-height:14px"></div>
+      </div>
+      <div>
+        <div class="subt" style="color:var(--blog)">Blog</div>
+        <div class="drop" id="dzBl" onclick="document.getElementById('fBl').click()" ondragover="dzOver(event,'dzBl')" ondragleave="dzLeave(event,'dzBl')" ondrop="dzDrop(event,'blog')"><div style="font-size:18px">📎</div><div style="font-size:11px;color:var(--text-3)">CSV</div></div>
+        <input type="file" id="fBl" accept=".csv" style="display:none" onchange="onFile(event,'blog')"><div id="stBl" style="font-size:11px;color:var(--text-3);margin-top:6px;min-height:14px"></div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid var(--border);margin-top:16px">
+      <div><div style="font-size:13px;font-weight:700">데이터 초기화</div><div style="font-size:11px;color:var(--text-4)">localStorage 입력분 삭제 (baked 데이터는 유지)</div></div>
+      <button class="btn" style="color:#DC2626;border-color:#FCA5A5" onclick="clearLocal()">초기화</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════ 1. DATA ════════ */
+const STORAGE_KEY='athome-recruit-v2';
+const UI_KEY='athome-recruit-ui-v2';
+// __EXPORT_PLACEHOLDER_START__
+const __BAKED_DATA__ = {"2026-W12": {"posts": [], "impressions": 314.0, "impressionsSocial": 314.0, "impressionsSponsor": 0.0, "clicks": 88.0, "likes": 5.0, "comments": 0.0, "shares": 1.0, "liPageVisitors": 9, "newFollowers": 2, "followers": 520, "users": 2076, "sessions": 2791, "pageviews": 6949, "newUsers": 1547, "recruit_pv": 1094, "detail_pv": 2321, "apply_pv": 500, "confirm_pv": 121, "blog_pageviews": 148, "blog_users": 27, "blog_engTime": 1702, "blog_ctaClicks": 5, "blog_channels": {"organic": 3, "social": 6, "direct": 26, "referral": 6, "other": 0}}, "2026-W13": {"posts": [], "impressions": 2551.0, "impressionsSocial": 2551.0, "impressionsSponsor": 0.0, "clicks": 371.0, "likes": 47.0, "comments": 1.0, "shares": 2.0, "liPageVisitors": 63, "newFollowers": 7, "followers": 527, "users": 1905, "sessions": 2544, "pageviews": 6551, "newUsers": 1420, "recruit_pv": 1127, "detail_pv": 1973, "apply_pv": 405, "confirm_pv": 80, "blog_pageviews": 809, "blog_users": 140, "blog_engTime": 13932, "blog_ctaClicks": 37, "blog_channels": {"organic": 23, "social": 33, "direct": 118, "referral": 20, "other": 0}}, "2026-W14": {"posts": [], "impressions": 4826.0, "impressionsSocial": 4826.0, "impressionsSponsor": 0.0, "clicks": 694.0, "likes": 63.0, "comments": 4.0, "shares": 2.0, "liPageVisitors": 65, "newFollowers": 17, "followers": 544, "users": 1608, "sessions": 2109, "pageviews": 5358, "newUsers": 1188, "recruit_pv": 991, "detail_pv": 1598, "apply_pv": 334, "confirm_pv": 70, "blog_pageviews": 1100, "blog_users": 280, "blog_engTime": 27602, "blog_ctaClicks": 43, "blog_channels": {"organic": 26, "social": 32, "direct": 262, "referral": 33, "other": 1}}, "2026-W15": {"posts": [], "impressions": 3342.0, "impressionsSocial": 3342.0, "impressionsSponsor": 0.0, "clicks": 438.0, "likes": 29.0, "comments": 1.0, "shares": 2.0, "liPageVisitors": 72, "newFollowers": 9, "followers": 553, "users": 1514, "sessions": 1979, "pageviews": 4969, "newUsers": 1165, "recruit_pv": 924, "detail_pv": 1551, "apply_pv": 318, "confirm_pv": 92, "blog_pageviews": 765, "blog_users": 212, "blog_engTime": 18047, "blog_ctaClicks": 26, "blog_channels": {"organic": 13, "social": 16, "direct": 171, "referral": 16, "other": 0}}, "2026-W16": {"posts": [], "impressions": 1360.0, "impressionsSocial": 1360.0, "impressionsSponsor": 0.0, "clicks": 362.0, "likes": 27.0, "comments": 2.0, "shares": 0.0, "liPageVisitors": 44, "newFollowers": 8, "followers": 561, "users": 1747, "sessions": 2574, "pageviews": 6602, "newUsers": 1508, "recruit_pv": 1173, "detail_pv": 3226, "apply_pv": 664, "confirm_pv": 170, "blog_pageviews": 953, "blog_users": 249, "blog_engTime": 34555, "blog_ctaClicks": 0, "blog_channels": {"organic": 24, "social": 17, "direct": 272, "referral": 17, "other": 0}, "blog_posts": [{"title": "앳홈 블로그", "path": "/", "pageviews": 360, "engTime": 11255, "ctaClicks": 0}, {"title": "온라인 세상의 중심에서 오프라인을 외치다 - 앳홈 블로그", "path": "/room-of-ljw", "pageviews": 156, "engTime": 9042, "ctaClicks": 0}, {"title": "뷰티만 10년 상품기획자가 앳홈을 선택한 이유 - 앳홈 블로그", "path": "/", "pageviews": 28, "engTime": 587, "ctaClicks": 0}, {"title": "People - 앳홈 블로그", "path": "/", "pageviews": 22, "engTime": 421, "ctaClicks": 0}, {"title": "[앳홈의 작업실] 작업실의 문을 열며 - 앳홈 블로그", "path": "/", "pageviews": 22, "engTime": 143, "ctaClicks": 0}, {"title": "Culture - 앳홈 블로그", "path": "/", "pageviews": 19, "engTime": 355, "ctaClicks": 0}, {"title": "온라인 세상의 중심에서 오프라인을 외치다 - 앳홈 블로그", "path": "/", "pageviews": 19, "engTime": 865, "ctaClicks": 0}, {"title": "Works - 앳홈 블로그", "path": "/", "pageviews": 18, "engTime": 245, "ctaClicks": 0}, {"title": "재미도 의미도 美라고 할 수 있다면 - 앳홈 블로그", "path": "/peopleofathome2", "pageviews": 18, "engTime": 751, "ctaClicks": 0}, {"title": "2025 얼라이먼트 데이 & 피플 오브 앳홈 – 하나의 방향, 하나의 팀 - 앳홈 블로그", "path": "/", "pageviews": 17, "engTime": 285, "ctaClicks": 0}, {"title": "2주 만에 약국 입점? 상식을 뛰어 넘은 실행력의 비밀 - 앳홈 블로그", "path": "/", "pageviews": 16, "engTime": 262, "ctaClicks": 0}, {"title": "뷰티만 10년 상품기획자가 앳홈을 선택한 이유 - 앳홈 블로그", "path": "/room-of-ljw", "pageviews": 15, "engTime": 181, "ctaClicks": 0}, {"title": "최고의 제품에 걸맞은 최고의 CX팀 - 앳홈 블로그", "path": "/", "pageviews": 14, "engTime": 498, "ctaClicks": 0}, {"title": "‘265%’ 매출 성장을 만든 마케터의 집념 - 앳홈 블로그", "path": "/", "pageviews": 12, "engTime": 1261, "ctaClicks": 0}, {"title": "3주 만에 미국 자사몰 오픈, 어떻게 가능했을까? - 앳홈 블로그", "path": "/", "pageviews": 10, "engTime": 407, "ctaClicks": 0}, {"title": "2주 만에 약국 입점? 상식을 뛰어 넘은 실행력의 비밀 - 앳홈 블로그", "path": "/room-of-ljw", "pageviews": 10, "engTime": 1098, "ctaClicks": 0}, {"title": "[앳홈의 작업실] 작업실의 문을 열며 - 앳홈 블로그", "path": "/room-of-ljw", "pageviews": 10, "engTime": 496, "ctaClicks": 0}, {"title": "몰입과 소통의 공간 앳홈 오피스, 디자이너를 통해 듣다 - 앳홈 블로그", "path": "/", "pageviews": 8, "engTime": 256, "ctaClicks": 0}, {"title": "숫자 너머의 전략 – 미닉스 세일즈 파트가 일하는 방식 - 앳홈 블로그", "path": "/", "pageviews": 8, "engTime": 555, "ctaClicks": 0}, {"title": "2025 얼라이먼트 데이 & 피플 오브 앳홈 – 하나의 방향, 하나의 팀 - 앳홈 블로그", "path": "/2025-alignmentday", "pageviews": 8, "engTime": 212, "ctaClicks": 0}]}, "2026-W08": {"users": 685, "sessions": 857, "pageviews": 2295, "newUsers": 631, "recruit_pv": 392, "detail_pv": 667, "apply_pv": 133, "confirm_pv": 34}, "2026-W09": {"users": 2407, "sessions": 3052, "pageviews": 7383, "newUsers": 2088, "recruit_pv": 1000, "detail_pv": 2690, "apply_pv": 664, "confirm_pv": 150}, "2026-W10": {"users": 1903, "sessions": 2450, "pageviews": 6694, "newUsers": 1521, "recruit_pv": 1042, "detail_pv": 2265, "apply_pv": 525, "confirm_pv": 135}, "2026-W11": {"users": 2658, "sessions": 3373, "pageviews": 8837, "newUsers": 2151, "recruit_pv": 1422, "detail_pv": 3088, "apply_pv": 642, "confirm_pv": 132}, "2026-W17": {"users": 1644, "sessions": 2486, "pageviews": 6359, "newUsers": 1365, "recruit_pv": 1098, "detail_pv": 3176, "apply_pv": 600, "confirm_pv": 169, "blog_pageviews": 700, "blog_users": 184, "blog_engTime": 20640, "blog_ctaClicks": 0, "blog_channels": {"organic": 17, "social": 18, "direct": 202, "referral": 7, "other": 2}, "blog_posts": [{"title": "앳홈 블로그", "path": "/", "pageviews": 342, "engTime": 6491, "ctaClicks": 0}, {"title": "People - 앳홈 블로그", "path": "/", "pageviews": 33, "engTime": 3162, "ctaClicks": 0}, {"title": "온라인 세상의 중심에서 오프라인을 외치다 - 앳홈 블로그", "path": "/room-of-ljw", "pageviews": 28, "engTime": 844, "ctaClicks": 0}, {"title": "온라인 세상의 중심에서 오프라인을 외치다 - 앳홈 블로그", "path": "/", "pageviews": 23, "engTime": 1219, "ctaClicks": 0}, {"title": "‘265%’ 매출 성장을 만든 마케터의 집념 - 앳홈 블로그", "path": "/", "pageviews": 22, "engTime": 593, "ctaClicks": 0}, {"title": "뷰티만 10년 상품기획자가 앳홈을 선택한 이유 - 앳홈 블로그", "path": "/", "pageviews": 19, "engTime": 982, "ctaClicks": 0}, {"title": "2주 만에 약국 입점? 상식을 뛰어 넘은 실행력의 비밀 - 앳홈 블로그", "path": "/", "pageviews": 18, "engTime": 1005, "ctaClicks": 0}, {"title": "Culture - 앳홈 블로그", "path": "/", "pageviews": 18, "engTime": 377, "ctaClicks": 0}, {"title": "[앳홈의 작업실] 작업실의 문을 열며 - 앳홈 블로그", "path": "/", "pageviews": 18, "engTime": 554, "ctaClicks": 0}, {"title": "2025 얼라이먼트 데이 & 피플 오브 앳홈 – 하나의 방향, 하나의 팀 - 앳홈 블로그", "path": "/", "pageviews": 14, "engTime": 432, "ctaClicks": 0}, {"title": "숫자 너머의 전략 – 미닉스 세일즈 파트가 일하는 방식 - 앳홈 블로그", "path": "/", "pageviews": 13, "engTime": 378, "ctaClicks": 0}, {"title": "Works - 앳홈 블로그", "path": "/", "pageviews": 10, "engTime": 131, "ctaClicks": 0}, {"title": "몰입과 소통의 공간 앳홈 오피스, 디자이너를 통해 듣다 - 앳홈 블로그", "path": "/", "pageviews": 10, "engTime": 179, "ctaClicks": 0}, {"title": "‘265%’ 매출 성장을 만든 마케터의 집념 - 앳홈 블로그", "path": "/peopleofathome3", "pageviews": 10, "engTime": 173, "ctaClicks": 0}, {"title": "앳홈의 공급망 조율사, SCM팀을 만나다 - 앳홈 블로그", "path": "/", "pageviews": 9, "engTime": 467, "ctaClicks": 0}, {"title": "재미도 의미도 美라고 할 수 있다면 - 앳홈 블로그", "path": "/peopleofathome2", "pageviews": 7, "engTime": 333, "ctaClicks": 0}, {"title": "2주 만에 약국 입점? 상식을 뛰어 넘은 실행력의 비밀 - 앳홈 블로그", "path": "/cpr-serum-pharmacy", "pageviews": 6, "engTime": 196, "ctaClicks": 0}, {"title": "몰입과 소통의 공간 앳홈 오피스, 디자이너를 통해 듣다 - 앳홈 블로그", "path": "/work-life-space-design", "pageviews": 6, "engTime": 99, "ctaClicks": 0}, {"title": "3주 만에 미국 자사몰 오픈, 어떻게 가능했을까? - 앳홈 블로그", "path": "/", "pageviews": 5, "engTime": 58, "ctaClicks": 0}, {"title": "앳홈의 서재: 시작 앞에서 읽는 책들 - 앳홈 블로그", "path": "/", "pageviews": 5, "engTime": 101, "ctaClicks": 0}]}, "__sources__": [{"source": "(direct)", "medium": "(none)", "users": 4042, "sessions": 5815}, {"source": "m.search.naver.com", "medium": "referral", "users": 2452, "sessions": 3399}, {"source": "naver", "medium": "organic", "users": 2193, "sessions": 3832}, {"source": "잡코리아", "medium": "referral", "users": 1416, "sessions": 1815}, {"source": "google", "medium": "organic", "users": 1334, "sessions": 3204}, {"source": "saramin.co.kr", "medium": "referral", "users": 480, "sessions": 756}, {"source": "잡코리아", "medium": "(not set)", "users": 381, "sessions": 613}, {"source": "linkedin.com", "medium": "referral", "users": 290, "sessions": 342}, {"source": "jobkorea.co.kr", "medium": "referral", "users": 241, "sessions": 306}, {"source": "(not set)", "medium": "(not set)", "users": 218, "sessions": 268}, {"source": "jobplanet.co.kr", "medium": "referral", "users": 152, "sessions": 179}, {"source": "ig", "medium": "social", "users": 148, "sessions": 175}, {"source": "brandapp-m.saramin.co.kr", "medium": "referral", "users": 147, "sessions": 174}, {"source": "youtube.com", "medium": "referral", "users": 121, "sessions": 159}, {"source": "superookie.com", "medium": "referral", "users": 110, "sessions": 194}, {"source": "blog", "medium": "referral", "users": 72, "sessions": 151}, {"source": "career.kookmin.ac.kr", "medium": "referral", "users": 63, "sessions": 94}, {"source": "inthiswork.com", "medium": "referral", "users": 56, "sessions": 113}, {"source": "athome10xchellenge.com", "medium": "referral", "users": 47, "sessions": 84}, {"source": "linkedin", "medium": "referral", "users": 47, "sessions": 75}], "__calendar__": [{"date": "2026-02-10", "title": "10X챌린지 2차", "channel": "linkedin", "note": ""}, {"date": "2026-02-20", "title": "AI가 그린 얼굴들", "channel": "linkedin", "note": ""}, {"date": "2026-02-27", "title": "CPR 세럼 출시", "channel": "linkedin", "note": "약국템 각도로 B2B 확장 스토리,\n어떤 팀이 만들었나 확장 가능"}, {"date": "2026-02-27", "title": "피플오브앳홈 김지아님 인터뷰", "channel": "blog", "note": ""}, {"date": "2026-03-03", "title": "피플오브앳홈 김지아님 인터뷰 편집본", "channel": "linkedin", "note": ""}, {"date": "2026-03-06", "title": "피플오브앳홈 유다영님 인터뷰", "channel": "blog", "note": ""}, {"date": "2026-03-10", "title": "피플오브앳홈 유다영님 인터뷰 편집본", "channel": "linkedin", "note": ""}, {"date": "2026-03-13", "title": "피플오브앳홈 최규성님 인터뷰", "channel": "blog", "note": ""}, {"date": "2026-03-17", "title": "피플오브앳홈 최규성님 인터뷰 편집본", "channel": "linkedin", "note": ""}, {"date": "2026-03-20", "title": "센텀시티점 공식 입점 — 오프라인 접점 확장", "channel": "linkedin", "note": "강남점 기입점 맥락 함께 언급"}, {"date": "2026-03-27", "title": "에어드라이어 출시", "channel": "linkedin", "note": "제품 개발 비하인드 or 팀 소개 연계 가능"}, {"date": "2026-04-02", "title": "일본 진출 (w. 레페리)", "channel": "linkedin", "note": ""}], "2026-W18": {"posts": [], "users": 1222, "sessions": 1824, "pageviews": 4641, "newUsers": 1017, "recruit_pv": 838, "detail_pv": 2051, "apply_pv": 370, "confirm_pv": 110, "blog_pageviews": 766, "blog_users": 193, "blog_engTime": 20358, "blog_ctaClicks": 0, "blog_channels": {"organic": 28, "social": 26, "direct": 211, "referral": 11, "other": 1}, "blog_posts": [{"title": "앳홈 블로그", "path": "/", "pageviews": 319, "engTime": 4102, "ctaClicks": 0}, {"title": "처음 뵙겠습니다, 톰입니다 - 앳홈 블로그", "path": "/hajimemashite-thome-desu", "pageviews": 37, "engTime": 948, "ctaClicks": 0}, {"title": "People - 앳홈 블로그", "path": "/", "pageviews": 34, "engTime": 514, "ctaClicks": 0}, {"title": "처음 뵙겠습니다, 톰입니다 - 앳홈 블로그", "path": "/", "pageviews": 28, "engTime": 1531, "ctaClicks": 0}, {"title": "Works - 앳홈 블로그", "path": "/", "pageviews": 26, "engTime": 338, "ctaClicks": 0}, {"title": "Culture - 앳홈 블로그", "path": "/", "pageviews": 24, "engTime": 308, "ctaClicks": 0}, {"title": "2주 만에 약국 입점? 상식을 뛰어 넘은 실행력의 비밀 - 앳홈 블로그", "path": "/", "pageviews": 17, "engTime": 677, "ctaClicks": 0}, {"title": "‘265%’ 매출 성장을 만든 마케터의 집념 - 앳홈 블로그", "path": "/peopleofathome3", "pageviews": 17, "engTime": 452, "ctaClicks": 0}, {"title": "2025 얼라이먼트 데이 & 피플 오브 앳홈 – 하나의 방향, 하나의 팀 - 앳홈 블로그", "path": "/", "pageviews": 14, "engTime": 411, "ctaClicks": 0}, {"title": "온라인 세상의 중심에서 오프라인을 외치다 - 앳홈 블로그", "path": "/", "pageviews": 13, "engTime": 474, "ctaClicks": 0}, {"title": "2주 만에 약국 입점? 상식을 뛰어 넘은 실행력의 비밀 - 앳홈 블로그", "path": "/cpr-serum-pharmacy", "pageviews": 13, "engTime": 227, "ctaClicks": 0}, {"title": "몰입과 소통의 공간 앳홈 오피스, 디자이너를 통해 듣다 - 앳홈 블로그", "path": "/", "pageviews": 12, "engTime": 389, "ctaClicks": 0}, {"title": "뷰티만 10년 상품기획자가 앳홈을 선택한 이유 - 앳홈 블로그", "path": "/", "pageviews": 12, "engTime": 187, "ctaClicks": 0}, {"title": "‘265%’ 매출 성장을 만든 마케터의 집념 - 앳홈 블로그", "path": "/", "pageviews": 10, "engTime": 1697, "ctaClicks": 0}, {"title": "[앳홈의 작업실] 작업실의 문을 열며 - 앳홈 블로그", "path": "/", "pageviews": 9, "engTime": 117, "ctaClicks": 0}, {"title": "숫자 너머의 전략 – 미닉스 세일즈 파트가 일하는 방식 - 앳홈 블로그", "path": "/", "pageviews": 9, "engTime": 328, "ctaClicks": 0}, {"title": "재미도 의미도 美라고 할 수 있다면 - 앳홈 블로그", "path": "/peopleofathome2", "pageviews": 9, "engTime": 196, "ctaClicks": 0}, {"title": "앳홈의 공급망 조율사, SCM팀을 만나다 - 앳홈 블로그", "path": "/", "pageviews": 8, "engTime": 221, "ctaClicks": 0}, {"title": "앳홈이 일하는 방식: 고객, 목표, 전념, 실행, 책임 - 앳홈 블로그", "path": "/", "pageviews": 8, "engTime": 180, "ctaClicks": 0}, {"title": "뷰티만 10년 상품기획자가 앳홈을 선택한 이유 - 앳홈 블로그", "path": "/cpr-serum-planning-athome", "pageviews": 8, "engTime": 87, "ctaClicks": 0}]}, "2026-W19": {"posts": [], "users": 1686, "sessions": 2356, "pageviews": 5734, "newUsers": 1454, "recruit_pv": 1088, "detail_pv": 2706, "apply_pv": 397, "confirm_pv": 116, "blog_pageviews": 659, "blog_users": 167, "blog_engTime": 22669, "blog_ctaClicks": 0, "blog_channels": {"organic": 22, "social": 9, "direct": 193, "referral": 8, "other": 0}, "blog_posts": [{"title": "앳홈 블로그", "path": "/", "pageviews": 307, "engTime": 6364, "ctaClicks": 0}, {"title": "People - 앳홈 블로그", "path": "/", "pageviews": 41, "engTime": 750, "ctaClicks": 0}, {"title": "Culture - 앳홈 블로그", "path": "/", "pageviews": 27, "engTime": 283, "ctaClicks": 0}, {"title": "처음 뵙겠습니다, 톰입니다 - 앳홈 블로그", "path": "/", "pageviews": 26, "engTime": 5168, "ctaClicks": 0}, {"title": "2025 얼라이먼트 데이 & 피플 오브 앳홈 – 하나의 방향, 하나의 팀 - 앳홈 블로그", "path": "/", "pageviews": 19, "engTime": 1750, "ctaClicks": 0}, {"title": "Works - 앳홈 블로그", "path": "/", "pageviews": 17, "engTime": 164, "ctaClicks": 0}, {"title": "뷰티만 10년 상품기획자가 앳홈을 선택한 이유 - 앳홈 블로그", "path": "/", "pageviews": 13, "engTime": 825, "ctaClicks": 0}, {"title": "재미도 의미도 美라고 할 수 있다면 - 앳홈 블로그", "path": "/peopleofathome2", "pageviews": 12, "engTime": 638, "ctaClicks": 0}, {"title": "2주 만에 약국 입점? 상식을 뛰어 넘은 실행력의 비밀 - 앳홈 블로그", "path": "/", "pageviews": 11, "engTime": 665, "ctaClicks": 0}, {"title": "‘265%’ 매출 성장을 만든 마케터의 집념 - 앳홈 블로그", "path": "/", "pageviews": 11, "engTime": 1423, "ctaClicks": 0}, {"title": "앳홈의 공급망 조율사, SCM팀을 만나다 - 앳홈 블로그", "path": "/", "pageviews": 11, "engTime": 504, "ctaClicks": 0}, {"title": "몰입과 소통의 공간 앳홈 오피스, 디자이너를 통해 듣다 - 앳홈 블로그", "path": "/", "pageviews": 9, "engTime": 206, "ctaClicks": 0}, {"title": "온라인 세상의 중심에서 오프라인을 외치다 - 앳홈 블로그", "path": "/", "pageviews": 9, "engTime": 525, "ctaClicks": 0}, {"title": "People - 앳홈 블로그", "path": "/category/people", "pageviews": 9, "engTime": 160, "ctaClicks": 0}, {"title": "처음 뵙겠습니다, 톰입니다 - 앳홈 블로그", "path": "/hajimemashite-thome-desu", "pageviews": 8, "engTime": 88, "ctaClicks": 0}, {"title": "[앳홈의 작업실] 작업실의 문을 열며 - 앳홈 블로그", "path": "/", "pageviews": 7, "engTime": 112, "ctaClicks": 0}, {"title": "최고의 제품에 걸맞은 최고의 CX팀 - 앳홈 블로그", "path": "/", "pageviews": 7, "engTime": 142, "ctaClicks": 0}, {"title": "‘한 번만 더’가 만드는 퀄리티의 차이 - 앳홈 블로그", "path": "/", "pageviews": 6, "engTime": 242, "ctaClicks": 0}, {"title": "숫자 너머의 전략 – 미닉스 세일즈 파트가 일하는 방식 - 앳홈 블로그", "path": "/", "pageviews": 6, "engTime": 166, "ctaClicks": 0}, {"title": "앳홈이 일하는 방식: 고객, 목표, 전념, 실행, 책임 - 앳홈 블로그", "path": "/", "pageviews": 6, "engTime": 135, "ctaClicks": 0}]}, "2026-W20": {"posts": [], "users": 1628, "sessions": 2509, "pageviews": 6677, "newUsers": 1355, "recruit_pv": 1197, "detail_pv": 2954, "apply_pv": 427, "confirm_pv": 163, "blog_pageviews": 863, "blog_users": 218, "blog_engTime": 26666, "blog_ctaClicks": 0, "blog_channels": {"organic": 24, "social": 6, "direct": 228, "referral": 29, "other": 0}, "blog_posts": [{"title": "앳홈 블로그", "path": "/", "pageviews": 418, "engTime": 8147, "ctaClicks": 0}, {"title": "People - 앳홈 블로그", "path": "/", "pageviews": 47, "engTime": 1128, "ctaClicks": 0}, {"title": "앳홈 팟캐스트 〈홈레코딩〉ㅣ목소리로 만나는 앳홈 - 앳홈 블로그", "path": "/", "pageviews": 31, "engTime": 615, "ctaClicks": 0}, {"title": "처음 뵙겠습니다, 톰입니다 - 앳홈 블로그", "path": "/", "pageviews": 31, "engTime": 2331, "ctaClicks": 0}, {"title": "뷰티만 10년 상품기획자가 앳홈을 선택한 이유 - 앳홈 블로그", "path": "/", "pageviews": 27, "engTime": 751, "ctaClicks": 0}, {"title": "온라인 세상의 중심에서 오프라인을 외치다 - 앳홈 블로그", "path": "/", "pageviews": 23, "engTime": 1039, "ctaClicks": 0}, {"title": "2025 얼라이먼트 데이 & 피플 오브 앳홈 – 하나의 방향, 하나의 팀 - 앳홈 블로그", "path": "/", "pageviews": 18, "engTime": 656, "ctaClicks": 0}, {"title": "Culture - 앳홈 블로그", "path": "/", "pageviews": 15, "engTime": 222, "ctaClicks": 0}, {"title": "Works - 앳홈 블로그", "path": "/", "pageviews": 15, "engTime": 241, "ctaClicks": 0}, {"title": "앳홈의 공급망 조율사, SCM팀을 만나다 - 앳홈 블로그", "path": "/", "pageviews": 13, "engTime": 388, "ctaClicks": 0}, {"title": "책임을 말하면서도 줄곧 따뜻하게 - 앳홈 블로그", "path": "/", "pageviews": 13, "engTime": 483, "ctaClicks": 0}, {"title": "2주 만에 약국 입점? 상식을 뛰어 넘은 실행력의 비밀 - 앳홈 블로그", "path": "/", "pageviews": 12, "engTime": 858, "ctaClicks": 0}, {"title": "앳홈 팟캐스트 〈홈레코딩〉ㅣ목소리로 만나는 앳홈 - 앳홈 블로그", "path": "/athome-recruiting-podcast", "pageviews": 12, "engTime": 23, "ctaClicks": 0}, {"title": "재미도 의미도 美라고 할 수 있다면 - 앳홈 블로그", "path": "/", "pageviews": 11, "engTime": 732, "ctaClicks": 0}, {"title": "[앳홈의 작업실] 작업실의 문을 열며 - 앳홈 블로그", "path": "/", "pageviews": 9, "engTime": 109, "ctaClicks": 0}, {"title": "‘265%’ 매출 성장을 만든 마케터의 집념 - 앳홈 블로그", "path": "/", "pageviews": 9, "engTime": 316, "ctaClicks": 0}, {"title": "앳홈이 일하는 방식: 고객, 목표, 전념, 실행, 책임 - 앳홈 블로그", "path": "/", "pageviews": 9, "engTime": 205, "ctaClicks": 0}, {"title": "2주 만에 약국 입점? 상식을 뛰어 넘은 실행력의 비밀 - 앳홈 블로그", "path": "/cpr-serum-pharmacy", "pageviews": 9, "engTime": 554, "ctaClicks": 0}, {"title": "뷰티만 10년 상품기획자가 앳홈을 선택한 이유 - 앳홈 블로그", "path": "/cpr-serum-planning-athome", "pageviews": 9, "engTime": 354, "ctaClicks": 0}, {"title": "3주 만에 미국 자사몰 오픈, 어떻게 가능했을까? - 앳홈 블로그", "path": "/", "pageviews": 8, "engTime": 475, "ctaClicks": 0}]}, "2026-W21": {"posts": [], "users": 1706, "sessions": 2552, "pageviews": 6763, "newUsers": 1419, "recruit_pv": 1178, "detail_pv": 3153, "apply_pv": 621, "confirm_pv": 197, "blog_pageviews": 1035, "blog_users": 220, "blog_engTime": 31280, "blog_ctaClicks": 0, "blog_channels": {"organic": 36, "social": 9, "direct": 231, "referral": 43, "other": 0}, "blog_posts": [{"title": "앳홈 블로그", "path": "/", "pageviews": 449, "engTime": 7608, "ctaClicks": 0}, {"title": "People - 앳홈 블로그", "path": "/", "pageviews": 56, "engTime": 1465, "ctaClicks": 0}, {"title": "Culture - 앳홈 블로그", "path": "/", "pageviews": 32, "engTime": 708, "ctaClicks": 0}, {"title": "앳홈 팟캐스트 〈홈레코딩〉ㅣ목소리로 만나는 앳홈 - 앳홈 블로그", "path": "/", "pageviews": 32, "engTime": 568, "ctaClicks": 0}, {"title": "처음 뵙겠습니다, 톰입니다 - 앳홈 블로그", "path": "/", "pageviews": 31, "engTime": 1421, "ctaClicks": 0}, {"title": "2025 얼라이먼트 데이 & 피플 오브 앳홈 – 하나의 방향, 하나의 팀 - 앳홈 블로그", "path": "/", "pageviews": 29, "engTime": 1076, "ctaClicks": 0}, {"title": "투앤티업: 20대를 위해 처음부터 만든 뷰티 디바이스 이야기 - 앳홈 블로그", "path": "/", "pageviews": 29, "engTime": 696, "ctaClicks": 0}, {"title": "온라인 세상의 중심에서 오프라인을 외치다 - 앳홈 블로그", "path": "/", "pageviews": 24, "engTime": 722, "ctaClicks": 0}, {"title": "Works - 앳홈 블로그", "path": "/", "pageviews": 20, "engTime": 365, "ctaClicks": 0}, {"title": "‘265%’ 매출 성장을 만든 마케터의 집념 - 앳홈 블로그", "path": "/", "pageviews": 17, "engTime": 926, "ctaClicks": 0}, {"title": "2주 만에 약국 입점? 상식을 뛰어 넘은 실행력의 비밀 - 앳홈 블로그", "path": "/", "pageviews": 16, "engTime": 524, "ctaClicks": 0}, {"title": "뷰티만 10년 상품기획자가 앳홈을 선택한 이유 - 앳홈 블로그", "path": "/", "pageviews": 14, "engTime": 646, "ctaClicks": 0}, {"title": "앳홈의 공급망 조율사, SCM팀을 만나다 - 앳홈 블로그", "path": "/", "pageviews": 14, "engTime": 673, "ctaClicks": 0}, {"title": "뷰티만 10년 상품기획자가 앳홈을 선택한 이유 - 앳홈 블로그", "path": "/cpr-serum-planning-athome", "pageviews": 14, "engTime": 669, "ctaClicks": 0}, {"title": "앳홈의 공급망 조율사, SCM팀을 만나다 - 앳홈 블로그", "path": "/scm-team-athome", "pageviews": 13, "engTime": 621, "ctaClicks": 0}, {"title": "투앤티업: 20대를 위해 처음부터 만든 뷰티 디바이스 이야기 - 앳홈 블로그", "path": "/thome-twenty-up-beauty-device", "pageviews": 13, "engTime": 469, "ctaClicks": 0}, {"title": "3주 만에 미국 자사몰 오픈, 어떻게 가능했을까? - 앳홈 블로그", "path": "/", "pageviews": 12, "engTime": 512, "ctaClicks": 0}, {"title": "몰입과 소통의 공간 앳홈 오피스, 디자이너를 통해 듣다 - 앳홈 블로그", "path": "/", "pageviews": 12, "engTime": 111, "ctaClicks": 0}, {"title": "[앳홈의 작업실] 작업실의 문을 열며 - 앳홈 블로그", "path": "/", "pageviews": 11, "engTime": 739, "ctaClicks": 0}, {"title": "2주 만에 약국 입점? 상식을 뛰어 넘은 실행력의 비밀 - 앳홈 블로그", "path": "/cpr-serum-pharmacy", "pageviews": 11, "engTime": 1622, "ctaClicks": 0}]}, "2026-W22": {"posts": [], "users": 1132, "sessions": 1672, "pageviews": 4200, "newUsers": 874, "recruit_pv": 733, "detail_pv": 1928, "apply_pv": 388, "confirm_pv": 126, "blog_pageviews": 599, "blog_users": 163, "blog_engTime": 13112, "blog_ctaClicks": 0, "blog_channels": {"organic": 20, "social": 15, "direct": 163, "referral": 28, "other": 16}, "blog_posts": [{"title": "앳홈 블로그", "path": "/", "pageviews": 290, "engTime": 4284, "ctaClicks": 0}, {"title": "북쪽 마을 미닉스의 집에 다녀왔습니다 - 앳홈 블로그", "path": "/minix-popup-house-visit", "pageviews": 23, "engTime": 336, "ctaClicks": 0}, {"title": "People - 앳홈 블로그", "path": "/", "pageviews": 21, "engTime": 401, "ctaClicks": 0}, {"title": "2025 얼라이먼트 데이 & 피플 오브 앳홈 – 하나의 방향, 하나의 팀 - 앳홈 블로그", "path": "/", "pageviews": 20, "engTime": 383, "ctaClicks": 0}, {"title": "앳홈 팟캐스트 〈홈레코딩〉ㅣ목소리로 만나는 앳홈 - 앳홈 블로그", "path": "/", "pageviews": 16, "engTime": 425, "ctaClicks": 0}, {"title": "처음 뵙겠습니다, 톰입니다 - 앳홈 블로그", "path": "/", "pageviews": 16, "engTime": 605, "ctaClicks": 0}, {"title": "Culture - 앳홈 블로그", "path": "/", "pageviews": 14, "engTime": 188, "ctaClicks": 0}, {"title": "‘265%’ 매출 성장을 만든 마케터의 집념 - 앳홈 블로그", "path": "/", "pageviews": 13, "engTime": 446, "ctaClicks": 0}, {"title": "앳홈의 공급망 조율사, SCM팀을 만나다 - 앳홈 블로그", "path": "/", "pageviews": 13, "engTime": 184, "ctaClicks": 0}, {"title": "온라인 세상의 중심에서 오프라인을 외치다 - 앳홈 블로그", "path": "/", "pageviews": 12, "engTime": 351, "ctaClicks": 0}, {"title": "투앤티업: 20대를 위해 처음부터 만든 뷰티 디바이스 이야기 - 앳홈 블로그", "path": "/", "pageviews": 10, "engTime": 347, "ctaClicks": 0}, {"title": "Works - 앳홈 블로그", "path": "/", "pageviews": 9, "engTime": 80, "ctaClicks": 0}, {"title": "북쪽 마을 미닉스의 집에 다녀왔습니다 - 앳홈 블로그", "path": "/", "pageviews": 9, "engTime": 142, "ctaClicks": 0}, {"title": "숫자 너머의 전략 – 미닉스 세일즈 파트가 일하는 방식 - 앳홈 블로그", "path": "/", "pageviews": 9, "engTime": 160, "ctaClicks": 0}, {"title": "몰입과 소통의 공간 앳홈 오피스, 디자이너를 통해 듣다 - 앳홈 블로그", "path": "/", "pageviews": 7, "engTime": 87, "ctaClicks": 0}, {"title": "뷰티만 10년 상품기획자가 앳홈을 선택한 이유 - 앳홈 블로그", "path": "/", "pageviews": 7, "engTime": 100, "ctaClicks": 0}, {"title": "최고의 제품에 걸맞은 최고의 CX팀 - 앳홈 블로그", "path": "/", "pageviews": 7, "engTime": 62, "ctaClicks": 0}, {"title": "처음 뵙겠습니다, 톰입니다 - 앳홈 블로그", "path": "/hajimemashite-thome-desu", "pageviews": 7, "engTime": 234, "ctaClicks": 0}, {"title": "3주 만에 미국 자사몰 오픈, 어떻게 가능했을까? - 앳홈 블로그", "path": "/", "pageviews": 6, "engTime": 251, "ctaClicks": 0}, {"title": "Blog em Casa", "path": "/", "pageviews": 6, "engTime": 1052, "ctaClicks": 0}]}};
+// __EXPORT_PLACEHOLDER_END__
+// __DATE_PLACEHOLDER_START__
+const __LAST_UPDATED__ = "2026년 5월 29일";
+// __DATE_PLACEHOLDER_END__
+
+let DB={};
+let range={mode:'4w',offset:0,start:null,end:null};
+let charts={};
+
+function loadData(){
+  let stored={};
+  try{stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');}catch{}
+  if(__BAKED_DATA__&&Object.keys(__BAKED_DATA__).length){
+    DB={...__BAKED_DATA__};
+    for(const[k,v]of Object.entries(stored)){
+      if(DB[k]&&typeof DB[k]==='object'&&!Array.isArray(DB[k]))DB[k]={...DB[k],...v};
+      else DB[k]=v;
+    }
+  }else DB=stored;
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(DB));
+}
+function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(DB));}
+
+/* ════════ 2. HELPERS ════════ */
+const $=s=>document.querySelector(s);
+const fmt=n=>(n==null||isNaN(n))?'0':Number(n).toLocaleString('ko-KR');
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const intv=el=>parseInt(el?.value)||0;
+function sortedWeeks(){return Object.keys(DB).filter(k=>/^\d{4}-W\d{2}$/.test(k)).sort();}
+function weekMonday(wid){const m=wid.match(/^(\d{4})-W(\d{2})$/);if(!m)return null;const y=+m[1],w=+m[2],jan4=new Date(Date.UTC(y,0,4)),d=jan4.getUTCDay()||7;return new Date(Date.UTC(y,0,4-d+1+(w-1)*7));}
+function weekLabel(wid){const m=wid.match(/W(\d+)/);return m?'W'+(+m[1]):wid;}
+function mdLabel(wid,end){const mon=weekMonday(wid);if(!mon)return'';const d=end?new Date(mon.getTime()+6*864e5):mon;return (d.getUTCMonth()+1)+'.'+d.getUTCDate();}
+function dateToWeek(str){
+  let d;
+  if(/^\d{8}$/.test(str))d=new Date(`${str.slice(0,4)}-${str.slice(4,6)}-${str.slice(6,8)}`);
+  else if(/^\d{2}\/\d{2}\/\d{4}$/.test(str)){const p=str.split('/');d=new Date(`${p[2]}-${p[0]}-${p[1]}`);}
+  else d=new Date(str);
+  if(!d||isNaN(d))return null;
+  const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const dn=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-dn);
+  const ys=new Date(Date.UTC(t.getUTCFullYear(),0,1));
+  return `${t.getUTCFullYear()}-W${String(Math.ceil((((t-ys)/864e5)+1)/7)).padStart(2,'0')}`;
+}
+function curWeek(){return dateToWeek(new Date().toISOString().slice(0,10));}
+const sum=(weeks,f)=>weeks.reduce((a,w)=>a+(DB[w]?.[f]||0),0);
+function mom(cur,prev){if(prev==null)return null;const diff=cur-prev,pct=prev>0?diff/prev*100:null;return{diff,pct,dir:diff>0?'up':diff<0?'down':'flat'};}
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+/* ════════ 3. RANGE ════════ */
+function computeRange(){
+  const ws=sortedWeeks();
+  if(!ws.length)return{weeks:[],prevWeeks:[],label:'데이터 없음'};
+  let weeks;
+  if(range.mode==='custom'&&range.start&&range.end){
+    const a=dateToWeek(range.start),b=dateToWeek(range.end);
+    weeks=ws.filter(w=>(!a||w>=a)&&(!b||w<=b)); if(!weeks.length)weeks=ws.slice(-4);
+  }else{
+    const n=range.mode==='all'?ws.length:range.mode==='12w'?12:range.mode==='8w'?8:4;
+    const maxOff=Math.max(0,ws.length-n); range.offset=Math.min(Math.max(0,range.offset),maxOff);
+    const end=ws.length-range.offset; weeks=ws.slice(Math.max(0,end-n),end);
+  }
+  const fi=ws.indexOf(weeks[0]);
+  const prevWeeks=fi>0?ws.slice(Math.max(0,fi-weeks.length),fi):[];
+  const label=weeks.length?`${mdLabel(weeks[0])} ~ ${mdLabel(weeks[weeks.length-1],true)} · ${weeks.length}주`:'데이터 없음';
+  return{weeks,prevWeeks,label};
+}
+function saveUi(){try{localStorage.setItem(UI_KEY,JSON.stringify(range));}catch{}}
+function restoreUi(){try{const s=JSON.parse(localStorage.getItem(UI_KEY)||'{}');if(s.mode)range.mode=s.mode;if(typeof s.offset==='number')range.offset=s.offset;if(s.start)range.start=s.start;if(s.end)range.end=s.end;
+  if(s.start&&$('#cStart'))$('#cStart').value=s.start; if(s.end&&$('#cEnd'))$('#cEnd').value=s.end;}catch{}}
+function setRange(m){range.mode=m;range.offset=0;if(m!=='custom'){range.start=range.end=null;}closeRange();saveUi();render();}
+function applyCustom(){const s=$('#cStart').value,e=$('#cEnd').value;if(!s||!e)return alert('시작일과 종료일을 모두 선택하세요');if(s>e)return alert('시작일이 종료일보다 늦습니다');range.mode='custom';range.start=s;range.end=e;range.offset=0;closeRange();saveUi();render();}
+function shiftRange(dir){if(range.mode==='all'||range.mode==='custom')return;const R=computeRange();range.offset-=dir*R.weeks.length;saveUi();render();}
+function toggleRange(ev){ev.stopPropagation();$('#rangeMenu').classList.toggle('open');}
+function closeRange(){$('#rangeMenu').classList.remove('open');}
+document.addEventListener('click',closeRange);
+function toggleAcc(id){document.getElementById(id).classList.toggle('open');}
+
+/* ════════ 4. RENDER ════════ */
+const FONT="'Pretendard Variable',Pretendard,sans-serif";
+const TICK={font:{family:FONT,size:11},color:'#A8A29A'};
+const LEGEND={display:true,position:'top',align:'end',labels:{boxWidth:9,boxHeight:9,padding:12,font:{family:FONT,size:11},color:'#6B6660'}};
+const TOOLTIP={backgroundColor:'#1A1A1A',titleFont:{family:FONT,size:12},bodyFont:{family:FONT,size:12}};
+
+function render(){
+  const R=computeRange();
+  $('#rangeLabel').textContent=R.label;
+  const ws=sortedWeeks();
+  const fi=R.weeks.length?ws.indexOf(R.weeks[0]):0, li=R.weeks.length?ws.indexOf(R.weeks[R.weeks.length-1]):ws.length-1;
+  const fixed=range.mode==='all'||range.mode==='custom';
+  $('#prevBtn').disabled=fixed||fi<=0; $('#nextBtn').disabled=fixed||li>=ws.length-1;
+  document.querySelectorAll('#rangeMenu [data-range]').forEach(b=>b.classList.toggle('on',b.dataset.range===range.mode));
+  renderAwareness(R); renderContribution(R); renderConversion(R);
+}
+
+/* ── 공통 빌더 ── */
+function spark(weeks,field){
+  if(weeks.length<2)return'';
+  const vals=weeks.map(w=>DB[w]?.[field]||0);
+  const mx=Math.max(...vals),mn=Math.min(...vals),rg=mx-mn||1,W=54,H=24;
+  const pts=vals.map((v,i)=>`${(i/(vals.length-1)*W).toFixed(1)},${(H-((v-mn)/rg)*(H-4)-2).toFixed(1)}`).join(' ');
+  const c=vals[vals.length-1]>=vals[vals.length-2]?'#16A34A':'#DC2626';
+  const ly=(H-((vals[vals.length-1]-mn)/rg)*(H-4)-2).toFixed(1);
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="opacity:.7;flex-shrink:0"><polyline points="${pts}" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${W}" cy="${ly}" r="2.4" fill="${c}"/></svg>`;
+}
+function badge(m){if(!m)return'';const a=m.dir==='up'?'▲':m.dir==='down'?'▼':'―';const p=m.pct!=null?` ${m.pct>=0?'+':''}${m.pct.toFixed(1)}%`:'';return `<span class="cmp ${m.dir}">${a}${p} vs 직전</span>`;}
+function kpi(label,val,sub,cur,prev,sparkField,sparkWeeks){
+  const m=mom(cur,prev),cls=m?m.dir:'';
+  return `<div class="kpi ${cls}"><div class="kpi-top"><span class="kpi-label">${label}</span>${sparkField?spark(sparkWeeks,sparkField):''}</div><div class="kpi-val">${val}</div><div class="kpi-sub">${sub}</div>${badge(m)}</div>`;
+}
+function lastFollowers(weeks){const f=weeks.filter(w=>DB[w]?.followers);return f.length?DB[f[f.length-1]].followers:0;}
+
+/* ── ① 인지 ── */
+function renderAwareness(R){
+  const {weeks,prevWeeks}=R, spk=sortedWeeks().slice(-8);
+  const curF=lastFollowers(weeks), prevF=prevWeeks.length?(lastFollowers(prevWeeks)||null):null;
+  const net=sum(weeks,'newFollowers');
+  $('#awKpis').innerHTML=[
+    kpi('LinkedIn 팔로워',fmt(curF),`기간 순증 ${net>=0?'+':''}${fmt(net)}명`,curF,prevF,'followers',spk),
+    kpi('LinkedIn 노출',fmt(sum(weeks,'impressions')),'기간 합계',sum(weeks,'impressions'),prevWeeks.length?sum(prevWeeks,'impressions'):null,'impressions',spk),
+    kpi('채용페이지 방문',fmt(sum(weeks,'users')),'기간 합계',sum(weeks,'users'),prevWeeks.length?sum(prevWeeks,'users'):null,'users',spk),
+    kpi('블로그 조회',fmt(sum(weeks,'blog_pageviews')),'기간 합계',sum(weeks,'blog_pageviews'),prevWeeks.length?sum(prevWeeks,'blog_pageviews'):null,'blog_pageviews',spk),
+  ].join('');
+
+  destroyChart('aw');
+  const box=$('#awChartBox'),empty=$('#awEmpty');
+  if(!weeks.length){box.style.display='none';empty.style.display='';}
+  else{
+    box.style.display='';empty.style.display='none';
+    const ann={};const cal=DB['__calendar__'];
+    if(cal)cal.filter(e=>e.date&&weeks.includes(dateToWeek(e.date))).forEach((e,i)=>{const idx=weeks.indexOf(dateToWeek(e.date));if(idx<0)return;ann['c'+i]={type:'line',xMin:idx,xMax:idx,borderColor:'rgba(0,0,0,.10)',borderWidth:1,borderDash:[4,3],label:{display:true,content:e.title.slice(0,11),position:'start',font:{size:9,family:FONT},color:'#A8A29A',backgroundColor:'transparent'}};});
+    charts.aw=new Chart($('#awChart'),{
+      data:{labels:weeks.map(weekLabel),datasets:[
+        {type:'bar',label:'LinkedIn 노출',data:weeks.map(w=>DB[w]?.impressions||0),backgroundColor:'rgba(74,69,64,.15)',borderRadius:4,yAxisID:'y',order:3},
+        {type:'line',label:'블로그 조회',data:weeks.map(w=>DB[w]?.blog_pageviews||0),borderColor:'#9A958C',borderWidth:1.8,pointRadius:2.5,tension:.3,yAxisID:'y',order:2},
+        {type:'line',label:'팔로워(누적)',data:weeks.map(w=>DB[w]?.followers||null),borderColor:'#FF5D00',borderWidth:2.4,pointRadius:3,tension:.3,spanGaps:true,yAxisID:'y1',order:1},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:LEGEND,tooltip:TOOLTIP,annotation:{annotations:ann}},
+        scales:{x:{grid:{color:'#F1F0ED'},ticks:TICK},y:{position:'left',grid:{color:'#F1F0ED'},ticks:{...TICK,callback:v=>fmt(v)}},y1:{position:'right',grid:{drawOnChartArea:false},ticks:{...TICK,callback:v=>fmt(v)}}}}
+    });
+  }
+  // 아코디언: 채널 주차 테이블
+  if($('#accAware').classList.contains('open')||$('#awDetail').innerHTML==='')renderAwareDetail(weeks);
+  else renderAwareDetail(weeks);
+}
+function renderAwareDetail(weeks){
+  const rows=w=>{const d=DB[w]||{};const rx=(d.likes||0)+(d.comments||0)+(d.shares||0);return `<tr><td><span class="wbadge">${weekLabel(w)}</span></td><td style="text-align:right">${fmt(d.impressions||0)}</td><td style="text-align:right">${fmt(rx)}</td><td style="text-align:right">${fmt(d.users||0)}</td><td style="text-align:right">${fmt(d.apply_pv||0)}</td><td style="text-align:right">${fmt(d.blog_pageviews||0)}</td></tr>`;};
+  $('#awDetail').innerHTML=weeks.length?`<table><thead><tr><th>주차</th><th style="text-align:right">LI노출</th><th style="text-align:right">LI반응</th><th style="text-align:right">방문</th><th style="text-align:right">지원도달</th><th style="text-align:right">블로그</th></tr></thead><tbody>${weeks.map(rows).join('')}</tbody></table>`:'<div class="empty">데이터 없음</div>';
+}
+
+/* 메인·카테고리 등 내비게이션 페이지 제외 (실제 글만 랭킹) */
+const NAV_TITLES=['앳홈 블로그','People','Culture','Works','Home','Now'];
+function isNavPage(p){
+  const t=String(p.title||'').replace(/\s*[-–]\s*앳홈 블로그\s*$/,'').trim();
+  if(!t||NAV_TITLES.includes(t))return true;
+  if(/\/category|^\/$/.test(p.path||'')&&NAV_TITLES.includes(t))return true;
+  if((p.path||'').includes('/category'))return true;
+  return false;
+}
+
+/* ── ② 콘텐츠 기여 ── */
+function renderContribution(R){
+  const {weeks}=R;
+  // 게시물 랭킹
+  const rows=[];
+  const bmap={};
+  weeks.forEach(w=>(DB[w]?.blog_posts||[]).forEach(p=>{if(isNavPage(p))return;const k=(p.path&&p.path!=='/')?p.path:(p.title||'');if(!k)return;if(!bmap[k])bmap[k]={title:p.title||p.path,pv:0,eng:0};bmap[k].pv+=p.pageviews||0;bmap[k].eng+=p.engTime||0;}));
+  Object.values(bmap).forEach(b=>rows.push({ch:'blog',title:b.title,date:'',metric:b.pv,ml:'조회',sub:engStr(b.eng,b.pv),grade:''}));
+  const li=DB['__li_posts__'];
+  if(li&&li.length)li.filter(p=>weeks.includes(dateToWeek(p.date))).forEach(p=>rows.push({ch:'linkedin',title:p.title,date:p.date,metric:p.impressions||0,ml:'노출',sub:`${fmt(p.reactions||0)} 반응`,grade:p.grade||''}));
+  else weeks.forEach(w=>(DB[w]?.posts||[]).forEach(p=>rows.push({ch:'linkedin',title:p.title,date:p.date||'',metric:p.impressions||0,ml:'노출',sub:`${fmt((p.likes||0)+(p.comments||0)+(p.shares||0))} 반응`,grade:''})));
+  rows.sort((a,b)=>(b.metric||0)-(a.metric||0));
+  const gc=g=>({S:'#FF5D00',A:'#1A1714',B:'#6B6660',C:'#A8A29A',D:'#A8A29A'}[g]||'#A8A29A');
+  $('#rankSub').textContent=rows.length?`${rows.length}개 중 상위 12`:'';
+  $('#rankBody').innerHTML=rows.length?rows.slice(0,12).map(r=>`<tr><td><span class="tag ${r.ch==='linkedin'?'li':'blog'}">${r.ch==='linkedin'?'LinkedIn':'Blog'}</span></td><td style="font-weight:600" class="ell" title="${esc(r.title)}">${esc(r.title||'—')}</td><td style="text-align:right;color:var(--text-4);font-size:12px">${esc(r.date||'—')}</td><td style="text-align:right;font-weight:700">${fmt(r.metric)} <span style="font-size:11px;color:var(--text-4);font-weight:400">${r.ml}</span></td><td style="text-align:right;color:var(--text-3)">${r.sub||'—'}</td><td style="text-align:right">${r.grade?`<b style="color:${gc(r.grade)}">${r.grade}</b>`:'<span style="color:var(--text-4)">—</span>'}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">이 기간 게시물 데이터 없음 — LinkedIn은 분석 시트 연동 또는 ⚙ 업로드 필요</td></tr>`;
+
+  // 잘 먹힌 콘텐츠 (시트)
+  const saCard=$('#saCard');
+  if(!li||!li.length){saCard.style.display='none';}
+  else{
+    saCard.style.display='';
+    const inR=li.filter(p=>weeks.includes(dateToWeek(p.date)));
+    const sa=inR.filter(p=>p.grade==='S'||p.grade==='A').sort((a,b)=>(b.impressions||0)-(a.impressions||0));
+    const hooks={};sa.forEach(p=>{if(p.hook)hooks[p.hook]=(hooks[p.hook]||0)+1;});
+    const th=Object.entries(hooks).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const saH=sa.length?sa.slice(0,5).map(p=>`<div class="sa-row"><span class="ell" style="font-weight:600;max-width:230px" title="${esc(p.title)}"><b style="color:#FF5D00;margin-right:6px">${p.grade}</b>${esc(p.title)}</span><span style="color:var(--text-4);white-space:nowrap">${fmt(p.impressions||0)}</span></div>`).join(''):'<div style="color:var(--text-4);font-size:12px;padding:8px 0">이 기간 S/A 등급 콘텐츠 없음</div>';
+    const hkH=th.length?th.map(([h,c])=>`<span class="chip">${esc(h)} <span style="color:var(--text-4)">×${c}</span></span>`).join(''):'<div style="color:var(--text-4);font-size:12px">데이터 없음</div>';
+    $('#saBox').innerHTML=`<div><div class="subt">S·A 등급 TOP</div>${saH}</div><div><div class="subt">잘 먹힌 훅</div>${hkH}</div>`;
+  }
+
+  // 발행 ↔ 영향도
+  renderRoi(weeks);
+}
+function engStr(sec,pv){if(!pv||!sec)return'—';const a=Math.round(sec/pv),m=Math.floor(a/60),s=a%60;return `${m}:${String(s).padStart(2,'0')}`;}
+function renderRoi(weeks){
+  const cal=DB['__calendar__'];
+  const tbody=$('#roiBody');
+  if(!cal||!cal.length){tbody.innerHTML='<tr><td colspan="4" class="empty">캘린더 데이터 없음</td></tr>';$('#roiSub').textContent='';return;}
+  const norm=s=>String(s||'').toLowerCase().replace(/앳홈\s*블로그/g,'').replace(/편집본/g,'').replace(/[\[\]【】〈〉()（）·\-—–_/,，.。!?！？\s]/g,'');
+  const items=cal.filter(e=>e.date&&weeks.includes(dateToWeek(e.date))).map(e=>{
+    const wid=dateToWeek(e.date),tn=norm(e.title);let val=null,kind='na',ml='';
+    if(e.channel==='linkedin'){ml='노출';const ps=(DB['__li_posts__']||[]).filter(p=>dateToWeek(p.date)===wid).concat(DB[wid]?.posts||[]);const m=ps.find(p=>{const pn=norm(p.title);return pn&&tn&&(pn.includes(tn)||tn.includes(pn));});if(m&&m.impressions){val=m.impressions;kind='direct';}}
+    else if(e.channel==='blog'||e.channel==='블로그'){ml='조회';const bp=DB[wid]?.blog_posts||[];const m=bp.find(p=>{const pn=norm(p.title);return pn&&tn&&(pn.includes(tn)||tn.includes(pn));});if(m&&m.pageviews){val=m.pageviews;kind='direct';}}
+    return{...e,wid,val,kind,ml};
+  }).sort((a,b)=>(a.kind!==b.kind)?(a.kind==='direct'?-1:1):(b.val||0)-(a.val||0));
+  if(!items.length){tbody.innerHTML='<tr><td colspan="4" class="empty">이 기간에 발행된 콘텐츠가 없습니다 — 범위를 넓혀보세요</td></tr>';$('#roiSub').textContent='';return;}
+  const direct=items.filter(i=>i.kind==='direct').length;
+  $('#roiSub').textContent=`직접 측정 ${direct} / ${items.length}건`;
+  tbody.innerHTML=items.map(r=>`<tr style="${r.kind==='direct'?'':'opacity:.55'}"><td style="font-weight:600" class="ell" title="${esc(r.title)}">${esc(r.title)}</td><td><span class="tag ${r.channel==='linkedin'?'li':(r.channel==='blog'||r.channel==='블로그')?'blog':'n'}">${esc(r.channel)}</span></td><td style="text-align:right"><span class="wbadge">${weekLabel(r.wid)}</span></td><td style="text-align:right">${r.kind==='direct'?`<b style="color:var(--text-1)">${fmt(r.val)}</b> <span style="font-size:11px;color:var(--text-4)">${r.ml}</span>`:'<span style="font-size:12px;color:var(--text-4)">— 측정 불가</span>'}</td></tr>`).join('');
+}
+
+/* ── ③ 전환·품질 ── */
+function renderConversion(R){
+  const {weeks}=R;
+  // 퍼널
+  const detail=sum(weeks,'detail_pv'),apply=sum(weeks,'apply_pv'),confirm=sum(weeks,'confirm_pv');
+  const base=detail||1,pct=v=>Math.max(3,Math.round(v/base*100));
+  const cvr2=detail>0?(apply/detail*100).toFixed(1):null,cvr3=apply>0?(confirm/apply*100).toFixed(1):null;
+  const stg=[{l:'공고 상세',v:detail,c:'#D2CCC3',cvr:null},{l:'지원 페이지',v:apply,c:'#A8A29A',cvr:cvr2},{l:'지원 완료',v:confirm,c:'#4A4540',cvr:cvr3}];
+  $('#funnel').innerHTML=weeks.length?stg.map((s,i)=>`<div class="funnel-row">${i>0?`<div class="funnel-arrow">↓<span class="funnel-cvr">${s.cvr?`전환 ${s.cvr}%`:''}</span></div>`:''}<div class="funnel-bg"><div class="funnel-bar" style="width:${pct(s.v)}%;background:${s.c}"></div></div><div class="funnel-meta"><span class="funnel-label">${s.l}</span><span class="funnel-count">${fmt(s.v)}<span class="funnel-unit"> PV</span></span></div></div>`).join(''):'<div class="empty">데이터 없음</div>';
+
+  // 유입 품질
+  const curPV=sum(weeks,'blog_pageviews');
+  const pw=R.prevWeeks;
+  const curUsr=sum(weeks,'blog_users'),prevUsr=pw.length?sum(pw,'blog_users'):0;
+  const curAvg=curUsr?sum(weeks,'blog_engTime')/curUsr:0;
+  const prevAvg=(pw.length&&prevUsr)?sum(pw,'blog_engTime')/prevUsr:null;
+  const m=Math.floor(curAvg/60),s=Math.round(curAvg%60);
+  const curU=sum(weeks,'users'),curN=sum(weeks,'newUsers'),nr=curU?((curN/curU)*100).toFixed(0):'—';
+  $('#quality').innerHTML=`<div style="display:flex;align-items:flex-end;gap:9px;margin-bottom:4px"><div class="q-big">${curPV?`${m}:${String(s).padStart(2,'0')}`:'—'}</div><div style="font-size:12px;color:var(--text-4);padding-bottom:5px">평균 체류 (분:초)</div></div><div style="margin-bottom:13px">${badge(mom(curAvg,prevAvg))}</div><div style="font-size:12px;color:var(--text-3);line-height:1.7"><div>· 블로그 조회 <b>${fmt(curPV)}</b> · 순방문 <b>${fmt(sum(weeks,'blog_users'))}</b></div><div>· 채용페이지 신규 방문 비율 <b>${nr}%</b></div><div style="color:var(--text-4);margin-top:8px">체류가 길수록 '콘텐츠 보고 들어온 결 맞는 트래픽'</div></div>`;
+
+  // 유입 출처
+  destroyChart('src');
+  const sources=DB['__sources__'],legend=$('#srcLegend');
+  if(!sources||!sources.length){legend.innerHTML='<div style="color:var(--text-4);font-size:12px">유입 출처 없음</div>';$('#srcDetail').innerHTML='';}
+  else{
+    const top5=sources.slice(0,5),tot=sources.reduce((a,x)=>a+x.users,0)||1,cols=['#4A4540','#6B6660','#8A857D','#B5AFA6','#D2CCC3'];
+    charts.src=new Chart($('#srcChart'),{type:'doughnut',data:{labels:top5.map(s=>`${s.source}/${s.medium}`),datasets:[{data:top5.map(s=>s.users),backgroundColor:cols,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:true,cutout:'64%',plugins:{legend:{display:false},tooltip:TOOLTIP}}});
+    legend.innerHTML=top5.map((s,i)=>`<div class="dough-row"><div style="display:flex;align-items:center;gap:6px;min-width:0"><div class="ldot" style="background:${cols[i]}"></div><span class="ell" style="max-width:150px">${esc(s.source)}/${esc(s.medium)}</span></div><div style="font-weight:700;white-space:nowrap">${fmt(s.users)} <span style="color:var(--text-4);font-weight:400">${(s.users/tot*100).toFixed(1)}%</span></div></div>`).join('');
+    $('#srcDetail').innerHTML=`<table><thead><tr><th>출처/매체</th><th style="text-align:right">방문자</th><th style="text-align:right">세션</th></tr></thead><tbody>${sources.map(s=>`<tr><td class="ell">${esc(s.source)}/${esc(s.medium)}</td><td style="text-align:right">${fmt(s.users)}</td><td style="text-align:right">${fmt(s.sessions)}</td></tr>`).join('')}</tbody></table>`;
+  }
+}
+
+/* ════════ 5. INPUT / SETTINGS ════════ */
+function openInput(){const w=curWeek();$('#iWeek').value=w;const d=DB[w]||{};['Imp:impressions','Clicks:clicks','Likes:likes','Comments:comments','Shares:shares','LiVis:liPageVisitors','Followers:followers','NewFol:newFollowers','Users:users','Sessions:sessions','Pv:pageviews'].forEach(p=>{const[id,f]=p.split(':');$('#i'+id).value=d[f]||'';});$('#inputModal').classList.add('open');}
+function closeInput(){$('#inputModal').classList.remove('open');}
+function saveWeek(){
+  const w=$('#iWeek').value.trim();if(!/^\d{4}-W\d{2}$/.test(w))return alert('올바른 주차를 입력하세요 (예: 2026-W22)');
+  DB[w]={...(DB[w]||{}),impressions:intv($('#iImp')),clicks:intv($('#iClicks')),likes:intv($('#iLikes')),comments:intv($('#iComments')),shares:intv($('#iShares')),liPageVisitors:intv($('#iLiVis')),followers:intv($('#iFollowers')),newFollowers:intv($('#iNewFol')),users:intv($('#iUsers')),sessions:intv($('#iSessions')),pageviews:intv($('#iPv'))};
+  saveData();closeInput();render();toast('저장됨: '+w);
+}
+function openSettings(){$('#settingsModal').classList.add('open');}
+function closeSettings(){$('#settingsModal').classList.remove('open');}
+function clearLocal(){if(!confirm('localStorage 입력분을 삭제할까요? (baked 데이터는 유지)'))return;localStorage.removeItem(STORAGE_KEY);loadData();render();toast('초기화 완료');}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);}
+
+/* ════════ 6. EXPORT ════════ */
+function exportWithData(){
+  const src=document.documentElement.outerHTML;
+  const injected=src.replace(/\/\/ __EXPORT_PLACEHOLDER_START__[\s\S]*?\/\/ __EXPORT_PLACEHOLDER_END__/,`// __EXPORT_PLACEHOLDER_START__\nconst __BAKED_DATA__ = ${JSON.stringify(DB)};\n// __EXPORT_PLACEHOLDER_END__`);
+  const blob=new Blob([injected],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  const d=new Date();a.download=`athome-dashboard-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.html`;
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+/* ════════ 7. FILE IMPORT (legacy 파서 포팅) ════════ */
+function dzOver(e,id){e.preventDefault();document.getElementById(id).classList.add('over');}
+function dzLeave(e,id){document.getElementById(id).classList.remove('over');}
+function dzDrop(e,type){e.preventDefault();const id=type==='linkedin'?'dzLi':type==='blog'?'dzBl':'dzGa';document.getElementById(id).classList.remove('over');const f=e.dataTransfer.files[0];if(f)parseFile(f,type);}
+function onFile(e,type){const f=e.target.files[0];if(f)parseFile(f,type);e.target.value='';}
+function stEl(type){return $(type==='linkedin'?'#stLi':type==='blog'?'#stBl':'#stGa');}
+function parseFile(file,type){
+  const st=stEl(type);st.textContent='파싱 중…';
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='xls'||ext==='xlsx'){const r=new FileReader();r.onload=ev=>{try{const wb=XLSX.read(ev.target.result,{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]],rows=XLSX.utils.sheet_to_json(ws,{defval:''});if(!rows.length){st.textContent='⚠️ 데이터 없음';return;}if(type==='linkedin')importLinkedIn(rows,st);else importGA4Rows(rows,st);}catch(x){st.textContent='⚠️ '+x.message;}};r.readAsArrayBuffer(file);}
+  else{const r=new FileReader();r.onload=ev=>{const text=ev.target.result;try{if(type==='blog')importBlogCSV(text,st);else if(type==='ga4'&&text.trimStart().startsWith('#'))importGA4Text(text,st);else Papa.parse(text,{header:true,skipEmptyLines:true,complete(res){if(!res.data?.length){st.textContent='⚠️ 데이터 없음';return;}if(type==='linkedin')importLinkedIn(res.data,st);else importGA4Rows(res.data,st);}});}catch(x){st.textContent='⚠️ '+x.message;}};r.readAsText(file,'UTF-8');}
+}
+function importLinkedIn(rows,st){if(!rows.length){st.textContent='⚠️ 없음';return;}const fk=Object.keys(rows[0])[0],av=Object.values(rows[0]).map(v=>String(v).trim());const isC=fk.length>20&&av.includes('날짜')&&av.includes('노출(소셜+스폰서)');const isV=fk.trim()==='날짜';if(isC)importLiContent(rows,st);else if(isV)importLiVF(rows,st);else st.textContent='⚠️ 포맷 인식 실패';}
+function importLiContent(rows,st){const hr=rows[0],ntk={};Object.entries(hr).forEach(([k,v])=>{if(v)ntk[String(v)]=k;});const dk=ntk['날짜'];if(!dk){st.textContent='⚠️ 날짜 없음';return;}const aff=new Set();rows.slice(1).forEach(r=>{const w=dateToWeek(String(r[dk]||''));if(w)aff.add(w);});aff.forEach(w=>{if(DB[w]){DB[w].impressions=DB[w].impressionsSocial=DB[w].impressionsSponsor=0;DB[w].clicks=DB[w].likes=DB[w].comments=DB[w].shares=0;}});let cnt=0;rows.slice(1).forEach(r=>{const w=dateToWeek(String(r[dk]||''));if(!w)return;if(!DB[w])DB[w]={};const d=DB[w],n=k=>Number(r[ntk[k]])||0;d.impressions=(d.impressions||0)+n('노출(소셜+스폰서)');d.impressionsSocial=(d.impressionsSocial||0)+n('노출(소셜)');d.impressionsSponsor=(d.impressionsSponsor||0)+n('노출(스폰서)');d.clicks=(d.clicks||0)+n('클릭(소셜+스폰서)');d.likes=(d.likes||0)+n('반응(소셜+스폰서)');d.comments=(d.comments||0)+n('댓글(소셜+스폰서)');d.shares=(d.shares||0)+n('퍼감(전체)');cnt++;});finishImport(st,`✅ 게시물 ${cnt}일치 임포트`);}
+function importLiVF(rows,st){const cols=Object.keys(rows[0]);const vc=cols.find(k=>k.includes('전체')&&k.includes('순방문자')&&k.includes('데스크톱+모바일'));const fc=cols.find(k=>k==='총 팔로워');if(!vc&&!fc){st.textContent='⚠️ 인식 실패';return;}const aff=new Set();rows.forEach(r=>{const w=dateToWeek(String(r['날짜']||''));if(w)aff.add(w);});aff.forEach(w=>{if(DB[w]){if(vc)DB[w].liPageVisitors=0;if(fc)DB[w].newFollowers=0;}});let cnt=0;rows.forEach(r=>{const w=dateToWeek(String(r['날짜']||''));if(!w)return;if(!DB[w])DB[w]={};if(vc)DB[w].liPageVisitors=(DB[w].liPageVisitors||0)+(Number(r[vc])||0);if(fc)DB[w].newFollowers=(DB[w].newFollowers||0)+(Number(r[fc])||0);cnt++;});if(fc)recalcFollowers();finishImport(st,`✅ ${vc?'방문자':'팔로워'} ${cnt}일치`);}
+const BASELINE_WEEK='2026-W12',BASELINE_FOLLOWERS=520;
+function recalcFollowers(){const ws=sortedWeeks();if(!ws.includes(BASELINE_WEEK))return;const bi=ws.indexOf(BASELINE_WEEK);DB[BASELINE_WEEK].followers=BASELINE_FOLLOWERS;let r=BASELINE_FOLLOWERS;for(let i=bi+1;i<ws.length;i++){r+=DB[ws[i]].newFollowers||0;DB[ws[i]].followers=r;}r=BASELINE_FOLLOWERS;for(let i=bi-1;i>=0;i--){r-=DB[ws[i]].newFollowers||0;DB[ws[i]].followers=Math.max(r,0);}}
+function importGA4Text(text,st){const lines=text.split('\n');let sd=null,ed=null;lines.forEach(l=>{const m1=l.match(/시작일[:\s]+(\d{8})/),m2=l.match(/종료일[:\s]+(\d{8})/);if(m1&&!sd)sd=m1[1];if(m2&&!ed)ed=m2[1];});const secs=[];let cur=null;lines.forEach(l=>{const t=l.trim();if(t.startsWith('#')||t===''){if(cur?.length){secs.push(cur);cur=null;}return;}if(!cur)cur=[];cur.push(t);});if(cur?.length)secs.push(cur);let tU=0,tN=0,tS=0,tP=0;secs.forEach(sec=>{const h=sec[0].split(',').map(s=>s.trim()),dr=sec.slice(1).map(row=>{const v=row.split(','),o={};h.forEach((hh,i)=>{o[hh]=(v[i]||'').trim();});return o;});if(h.includes('활성 사용자')&&h.includes('새 사용자 수')){tU=parseInt(dr[0]?.['활성 사용자'])||0;tN=parseInt(dr[0]?.['새 사용자 수'])||0;tS=parseInt(dr[0]?.['세션수']||dr[0]?.['세션']||0);}if(h.includes('페이지 제목 및 화면 클래스')&&h.includes('조회수'))dr.forEach(r=>{tP+=parseInt(r['조회수'])||0;});});const wdc={};if(sd&&ed){const s=new Date(`${sd.slice(0,4)}-${sd.slice(4,6)}-${sd.slice(6,8)}`),e=new Date(`${ed.slice(0,4)}-${ed.slice(4,6)}-${ed.slice(6,8)}`);for(const d=new Date(s);d<=e;d.setDate(d.getDate()+1)){const w=dateToWeek(d.toISOString().slice(0,10));if(w)wdc[w]=(wdc[w]||0)+1;}}const wks=Object.keys(wdc);if(!wks.length){const w=curWeek();wks.push(w);wdc[w]=7;}wks.forEach(w=>{if(DB[w]){DB[w].users=DB[w].newUsers=DB[w].sessions=DB[w].pageviews=0;}});const td=Object.values(wdc).reduce((a,b)=>a+b,0);wks.forEach(w=>{if(!DB[w])DB[w]={};const ratio=wdc[w]/td;DB[w].users=Math.round(tU*ratio);DB[w].newUsers=Math.round(tN*ratio);DB[w].sessions=Math.round(tS*ratio);DB[w].pageviews=Math.round(tP*ratio);});finishImport(st,`✅ GA4 방문자 ${fmt(tU)} → ${wks.length}주 분배`);}
+function importGA4Rows(rows,st){const rh=Object.keys(rows[0]);const dc=rh.find(h=>h==='날짜'||h.toLowerCase().includes('date'));let cnt=0;rows.forEach(row=>{const w=dc&&row[dc]?dateToWeek(String(row[dc])):curWeek();if(!w)return;if(!DB[w])DB[w]={};DB[w].users=(DB[w].users||0)+(Number(row['활성 사용자']||row['users']||0));DB[w].sessions=(DB[w].sessions||0)+(Number(row['세션수']||row['sessions']||0));DB[w].pageviews=(DB[w].pageviews||0)+(Number(row['조회수']||row['pageviews']||0));cnt++;});finishImport(st,`✅ ${cnt}행 임포트`);}
+function importBlogCSV(text,st){const lines=text.split('\n').filter(l=>l.trim()&&!l.startsWith('#'));if(lines.length<2){st.textContent='⚠️ 없음';return;}const headers=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));const pvI=headers.findIndex(h=>/page.*view|screen.*view|조회수/i.test(h)),tI=headers.findIndex(h=>/page.*title|제목/i.test(h)),pI=headers.findIndex(h=>/page.*path|url|경로/i.test(h)),eI=headers.findIndex(h=>/engagement.*time|체류.*시간|참여.*시간/i.test(h)),uI=headers.findIndex(h=>/^(active\s*)?user|순.*방문자/i.test(h));if(pvI<0){st.textContent='⚠️ 조회수 없음';return;}const rows=[];for(let i=1;i<lines.length;i++){const cols=lines[i].split(',').map(c=>c.trim().replace(/^"|"$/g,''));const pv=parseInt(cols[pvI])||0;if(!pv)continue;let et=0;if(eI>=0){const raw=cols[eI]||'0';if(raw.includes(':')){const parts=raw.split(':');et=(parseInt(parts[0])||0)*60+(parseInt(parts[1])||0);}else et=Math.round(parseFloat(raw)||0);et=et*pv;}rows.push({title:tI>=0?cols[tI]:'',path:pI>=0?cols[pI]:'',pageviews:pv,users:uI>=0?parseInt(cols[uI])||0:0,engTime:et,ctaClicks:0});}if(!rows.length){st.textContent='⚠️ 없음';return;}const tw=sortedWeeks().slice(-1)[0]||curWeek();if(!DB[tw])DB[tw]={};const d=DB[tw];d.blog_pageviews=rows.reduce((s,r)=>s+r.pageviews,0);d.blog_users=rows.reduce((s,r)=>s+r.users,0);d.blog_engTime=rows.reduce((s,r)=>s+r.engTime,0);d.blog_posts=rows.slice(0,20);finishImport(st,`✅ 블로그 ${rows.length}페이지 임포트`);}
+function finishImport(st,msg){saveData();render();st.textContent=msg;}
+
+/* ════════ 8. SOURCE SYNC ════════ */
+const CALENDAR_CSV_URL='https://docs.google.com/spreadsheets/d/1bnLQypIuMb0gw0RxzwYVkqGBdN8KSA4_TXSuogaOWak/export?format=csv&gid=658998951';
+const LINKEDIN_CSV_URL='https://docs.google.com/spreadsheets/d/1c23pJ1OFXh9YMY2gZaHFP0ynIJpYepUM8b1gZTijzOA/export?format=csv';
+function normChannel(ch){const s=(ch||'').trim().toLowerCase();if(s.includes('링크드')||s==='linkedin')return'linkedin';if(s.includes('블로그')||s==='blog')return'blog';if(s.includes('채용')||s.includes('recruit'))return'recruit';return s||'other';}
+function pickCol(row,names){const keys=Object.keys(row);for(const n of names)for(const k of keys)if(k.trim()===n)return row[k];return'';}
+async function syncCalendar(){try{const res=await fetch(CALENDAR_CSV_URL,{cache:'no-store'});if(!res.ok)throw 0;const{data}=Papa.parse(await res.text(),{header:true,skipEmptyLines:true});const ev=data.map(r=>({date:(r['시기']||'').trim(),title:(r['주요 주제']||'').trim(),channel:normChannel(r['채널']),url:(r['URL']||r['url']||r['링크']||'').trim()})).filter(e=>e.date&&e.title);if(ev.length){DB['__calendar__']=ev;render();}}catch(e){console.warn('[calendar] sync skip');}}
+async function syncLinkedIn(){try{const res=await fetch(LINKEDIN_CSV_URL,{cache:'no-store'});if(!res.ok)throw 0;const{data}=Papa.parse(await res.text(),{header:true,skipEmptyLines:true});const num=v=>Number(String(v||'').replace(/[^0-9.-]/g,''))||0;const posts=data.map(r=>({date:String(pickCol(r,['날짜','발행일','발행 날짜','date','Date'])||'').trim(),title:String(pickCol(r,['제목','콘텐츠','게시물','title','Title'])||'').trim(),topic:String(pickCol(r,['주제','주제(1차)','카테고리'])||'').trim(),hook:String(pickCol(r,['훅','훅(2차)','hook'])||'').trim(),impressions:num(pickCol(r,['노출','노출수','impressions'])),reactions:num(pickCol(r,['반응','반응수','좋아요'])),comments:num(pickCol(r,['댓글','댓글수'])),clicks:num(pickCol(r,['클릭','클릭수'])),grade:String(pickCol(r,['등급','grade','Grade'])||'').trim().toUpperCase().slice(0,1)})).filter(p=>p.title&&p.date);if(posts.length){DB['__li_posts__']=posts;render();}}catch(e){console.warn('[linkedin] sync skip');}}
+
+/* ════════ 9. STALE ════════ */
+function checkStale(){if(!__LAST_UPDATED__||__LAST_UPDATED__==='—')return;const p=__LAST_UPDATED__.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);if(!p)return;const diff=Math.floor((Date.now()-new Date(+p[1],+p[2]-1,+p[3]))/864e5);if(diff>=7){const el=$('#stale');el.textContent=`데이터가 ${diff}일 전 업데이트되었습니다. update.sh 실행을 권장합니다.`;el.style.display='block';}}
+
+/* ════════ 10. INIT ════════ */
+loadData();
+restoreUi();
+checkStale();
+render();
+syncCalendar();
+syncLinkedIn();
+</script>
+</body>
+</html>
