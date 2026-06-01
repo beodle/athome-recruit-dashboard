@@ -239,15 +239,9 @@ tbody tr:hover td{background:var(--bg-soft);}
   <!-- ③ 전환·품질 -->
   <section class="sec">
     <div class="sec-head"><span class="sec-no">03</span><span class="sec-title">전환 · 품질</span><span class="sec-desc">인입 흐름과 트래픽의 결</span></div>
-    <div class="grid2 mb">
-      <div class="card pad">
-        <div class="card-h"><div class="dot" style="background:var(--ga4)"></div><span class="t">채용 퍼널 (지원까지)</span></div>
-        <div id="funnel"></div>
-      </div>
-      <div class="card pad">
-        <div class="card-h"><div class="dot" style="background:var(--up)"></div><span class="t">유입 품질 — 블로그 평균 체류</span></div>
-        <div id="quality"></div>
-      </div>
+    <div class="card pad mb">
+      <div class="card-h"><div class="dot" style="background:var(--up)"></div><span class="t">유입 품질 — 블로그 평균 체류</span></div>
+      <div id="quality"></div>
     </div>
     <div class="card pad">
       <div class="card-h"><div class="dot" style="background:var(--ga4)"></div><span class="t">유입 출처</span><span class="sub">채용 페이지 · 전체 기간</span></div>
@@ -538,13 +532,6 @@ function renderRoi(weeks){
 /* ── ③ 전환·품질 ── */
 function renderConversion(R){
   const {weeks}=R;
-  // 퍼널
-  const detail=sum(weeks,'detail_pv'),apply=sum(weeks,'apply_pv'),confirm=sum(weeks,'confirm_pv');
-  const base=detail||1,pct=v=>Math.max(3,Math.round(v/base*100));
-  const cvr2=detail>0?(apply/detail*100).toFixed(1):null,cvr3=apply>0?(confirm/apply*100).toFixed(1):null;
-  const stg=[{l:'공고 상세',v:detail,c:'#D2CCC3',cvr:null},{l:'지원 페이지',v:apply,c:'#A8A29A',cvr:cvr2},{l:'지원 완료',v:confirm,c:'#4A4540',cvr:cvr3}];
-  $('#funnel').innerHTML=weeks.length?stg.map((s,i)=>`<div class="funnel-row">${i>0?`<div class="funnel-arrow">↓<span class="funnel-cvr">${s.cvr?`전환 ${s.cvr}%`:''}</span></div>`:''}<div class="funnel-bg"><div class="funnel-bar" style="width:${pct(s.v)}%;background:${s.c}"></div></div><div class="funnel-meta"><span class="funnel-label">${s.l}</span><span class="funnel-count">${fmt(s.v)}<span class="funnel-unit"> PV</span></span></div></div>`).join(''):'<div class="empty">데이터 없음</div>';
-
   // 유입 품질
   const curPV=sum(weeks,'blog_pageviews');
   const pw=R.prevWeeks;
