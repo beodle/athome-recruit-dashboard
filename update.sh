@@ -114,6 +114,7 @@ for wk in WEEKS:
     d['blog_pageviews'] = bt['pageviews']
     d['blog_users']     = bt['users']
     d['blog_engTime']   = blog_eng(s, e)
+    d['blog_avg_engagement'] = round(d['blog_engTime'] / d['blog_users']) if d['blog_users'] else 0  # GA4 '평균 참여 시간'(초) = 총 참여시간 / 활성 사용자
     d['blog_ctaClicks'] = 0
     d['blog_channels']  = blog_channels(s, e)
     d['blog_posts']     = blog_posts(s, e)
