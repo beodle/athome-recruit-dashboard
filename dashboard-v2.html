@@ -68,6 +68,7 @@ body{font-family:var(--font);font-size:14px;color:var(--text-1);background:var(-
 .sec-no{font-size:12px;font-weight:700;color:var(--text-4);letter-spacing:.08em;}
 .sec-title{font-size:19px;font-weight:800;letter-spacing:-.03em;}
 .sec-desc{font-size:12.5px;color:var(--text-4);font-weight:500;}
+.sec-pub{margin-left:auto;font-size:12px;color:var(--text-4);font-weight:600;}
 .card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow);}
 .pad{padding:22px 24px;}
 .mb{margin-bottom:14px;}
@@ -79,8 +80,8 @@ body{font-family:var(--font);font-size:14px;color:var(--text-1);background:var(-
 
 /* ── KPI ── */
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
-.kpis--6{grid-template-columns:repeat(6,1fr);}
-@media(max-width:820px){ .kpis--6{grid-template-columns:repeat(2,1fr);} }
+.kpis--5{grid-template-columns:repeat(5,1fr);}
+@media(max-width:820px){ .kpis--5{grid-template-columns:repeat(2,1fr);} }
 .kpi{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;transition:transform .14s,box-shadow .14s;}
 .kpi:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(40,30,20,.06);}
 .kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
@@ -202,7 +203,7 @@ tbody tr:hover td{background:var(--bg-soft);}
 
   <!-- 성과 스코어카드 -->
   <section class="sec" id="secScore" style="margin-top:24px">
-    <div class="kpis kpis--6" id="scoreTiles"></div>
+    <div class="kpis kpis--5" id="scoreTiles"></div>
     <div id="scoreInsight" style="margin-top:12px;font-size:13px;color:var(--text-2);line-height:1.6"></div>
   </section>
 
@@ -222,7 +223,7 @@ tbody tr:hover td{background:var(--bg-soft);}
 
   <!-- ② 콘텐츠 기여 -->
   <section class="sec">
-    <div class="sec-head"><span class="sec-no">02</span><span class="sec-title">콘텐츠 기여</span><span class="sec-desc">무엇이 먹혔나 → 다음 액션</span></div>
+    <div class="sec-head"><span class="sec-no">02</span><span class="sec-title">콘텐츠 기여</span><span class="sec-desc">무엇이 먹혔나 → 다음 액션</span><span class="sec-pub" id="pubCount"></span></div>
     <div class="card pad mb">
       <div class="card-h"><div class="dot" style="background:var(--accent)"></div><span class="t">게시물 성과 랭킹</span><span class="sub" id="rankSub"></span></div>
       <table>
@@ -460,17 +461,6 @@ function renderScorecard(R){
   const curBlog=sum(weeks,'blog_pageviews');
   const prevBlog=pw.length?sum(pw,'blog_pageviews'):null;
 
-  // 발행 수 (캘린더 기반)
-  const cal=DB['__calendar__']||[];
-  const weekSet=new Set(weeks);
-  const prevWeekSet=new Set(pw);
-  const calCur=cal.filter(e=>e.date&&weekSet.has(dateToWeek(e.date)));
-  const calPrev=cal.filter(e=>e.date&&prevWeekSet.has(dateToWeek(e.date)));
-  const curPub=calCur.length;
-  const prevPub=pw.length?calPrev.length:null;
-  const liN=calCur.filter(e=>e.channel==='linkedin').length;
-  const blN=calCur.filter(e=>e.channel==='blog'||e.channel==='블로그').length;
-
   // 평균 참여 시간
   const curBlogUsr=sum(weeks,'blog_users');
   const prevBlogUsr=pw.length?sum(pw,'blog_users'):0;
@@ -479,12 +469,11 @@ function renderScorecard(R){
   const avgMin=Math.floor(curAvg/60);
   const avgSec=String(Math.round(curAvg%60)).padStart(2,'0');
 
-  $( '#scoreTiles').innerHTML=[
+  $('#scoreTiles').innerHTML=[
     kpi('LinkedIn 팔로워',fmt(curF),`기간 순증 ${net>=0?'+':''}${fmt(net)}명`,curF,prevF,'followers',spk),
     kpi('LinkedIn 노출',fmt(curImp),'기간 합계',curImp,prevImp,'impressions',spk),
     kpi('채용페이지 방문',fmt(curUsr),'기간 합계',curUsr,prevUsr,'users',spk),
     kpi('블로그 조회',fmt(curBlog),'기간 합계',curBlog,prevBlog,'blog_pageviews',spk),
-    kpi('발행 수',String(curPub),`LI ${liN} · Blog ${blN}`,curPub,prevPub,null,null),
     kpi('평균 참여 시간',curBlogUsr?`${avgMin}:${avgSec}`:'—','분:초',curAvg,prevAvg,null,null),
   ].join('');
 
@@ -494,7 +483,6 @@ function renderScorecard(R){
     {name:'노출',cur:curImp,prev:prevImp},
     {name:'방문',cur:curUsr,prev:prevUsr},
     {name:'블로그 조회',cur:curBlog,prev:prevBlog},
-    {name:'발행 수',cur:curPub,prev:prevPub},
     {name:'평균 참여',cur:curAvg,prev:prevAvg},
   ];
   const changes=metrics
@@ -560,6 +548,17 @@ function isNavPage(p){
 /* ── ② 콘텐츠 기여 ── */
 function renderContribution(R){
   const {weeks}=R;
+  // 발행 수 컨텍스트 라벨
+  const pubEl=$('#pubCount');
+  if(pubEl){
+    const cal=DB['__calendar__']||[];
+    const weekSet=new Set(weeks);
+    const calCur=cal.filter(e=>e.date&&weekSet.has(dateToWeek(e.date)));
+    const curPub=calCur.length;
+    const liN=calCur.filter(e=>e.channel==='linkedin').length;
+    const blN=calCur.filter(e=>e.channel==='blog'||e.channel==='블로그').length;
+    pubEl.innerHTML=curPub?`이번 기간 발행 ${curPub}건 · LI ${liN} · Blog ${blN}`:'이번 기간 발행 없음';
+  }
   // 게시물 랭킹
   const rows=[];
   const bmap={};
