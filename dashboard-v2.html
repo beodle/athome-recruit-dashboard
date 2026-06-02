@@ -227,13 +227,9 @@ tbody tr:hover td{background:var(--bg-soft);}
     <div class="card pad mb">
       <div class="card-h"><div class="dot" style="background:var(--accent)"></div><span class="t">게시물 성과 랭킹</span><span class="sub" id="rankSub"></span></div>
       <table>
-        <thead><tr><th>채널</th><th>게시물</th><th style="text-align:right">날짜</th><th style="text-align:right">대표 지표</th><th style="text-align:right">반응·체류</th><th style="text-align:right">등급</th></tr></thead>
+        <thead><tr><th>채널</th><th>게시물</th><th style="text-align:right">날짜</th><th style="text-align:right">대표 지표</th><th style="text-align:right">반응·체류</th></tr></thead>
         <tbody id="rankBody"></tbody>
       </table>
-    </div>
-    <div class="card pad mb" id="saCard" style="display:none">
-      <div class="card-h"><div class="dot" style="background:var(--li)"></div><span class="t">이번 기간 잘 먹힌 콘텐츠</span><span class="sub">LinkedIn 분석</span></div>
-      <div class="grid2" id="saBox"></div>
     </div>
     <div class="card pad">
       <div class="card-h"><div class="dot" style="background:var(--accent)"></div><span class="t">발행 콘텐츠 ↔ 영향도</span><span class="sub" id="roiSub"></span></div>
@@ -563,28 +559,13 @@ function renderContribution(R){
   const rows=[];
   const bmap={};
   weeks.forEach(w=>(DB[w]?.blog_posts||[]).forEach(p=>{if(isNavPage(p))return;const k=(p.path&&p.path!=='/')?p.path:(p.title||'');if(!k)return;if(!bmap[k])bmap[k]={title:p.title||p.path,pv:0,eng:0};bmap[k].pv+=p.pageviews||0;bmap[k].eng+=p.engTime||0;}));
-  Object.values(bmap).forEach(b=>rows.push({ch:'blog',title:b.title,date:'',metric:b.pv,ml:'조회',sub:engStr(b.eng,b.pv),grade:''}));
+  Object.values(bmap).forEach(b=>rows.push({ch:'blog',title:b.title,date:'',metric:b.pv,ml:'조회',sub:engStr(b.eng,b.pv)}));
   const li=DB['__li_posts__'];
-  if(li&&li.length)li.filter(p=>weeks.includes(dateToWeek(p.date))).forEach(p=>rows.push({ch:'linkedin',title:p.title,date:p.date,metric:p.impressions||0,ml:'노출',sub:`${fmt(p.reactions||0)} 반응`,grade:p.grade||''}));
-  else weeks.forEach(w=>(DB[w]?.posts||[]).forEach(p=>rows.push({ch:'linkedin',title:p.title,date:p.date||'',metric:p.impressions||0,ml:'노출',sub:`${fmt((p.likes||0)+(p.comments||0)+(p.shares||0))} 반응`,grade:''})));
+  if(li&&li.length)li.filter(p=>weeks.includes(dateToWeek(p.date))).forEach(p=>rows.push({ch:'linkedin',title:p.title,date:p.date,metric:p.impressions||0,ml:'노출',sub:`${fmt(p.reactions||0)} 반응`}));
+  else weeks.forEach(w=>(DB[w]?.posts||[]).forEach(p=>rows.push({ch:'linkedin',title:p.title,date:p.date||'',metric:p.impressions||0,ml:'노출',sub:`${fmt((p.likes||0)+(p.comments||0)+(p.shares||0))} 반응`})));
   rows.sort((a,b)=>(b.metric||0)-(a.metric||0));
-  const gc=g=>({S:'#FF5D00',A:'#1A1714',B:'#6B6660',C:'#A8A29A',D:'#A8A29A'}[g]||'#A8A29A');
   $('#rankSub').textContent=rows.length?`${rows.length}개 중 상위 12`:'';
-  $('#rankBody').innerHTML=rows.length?rows.slice(0,12).map(r=>`<tr><td><span class="tag ${r.ch==='linkedin'?'li':'blog'}">${r.ch==='linkedin'?'LinkedIn':'Blog'}</span></td><td style="font-weight:600" class="ell" title="${esc(r.title)}">${esc(r.title||'—')}</td><td style="text-align:right;color:var(--text-4);font-size:12px">${esc(r.date||'—')}</td><td style="text-align:right;font-weight:700">${fmt(r.metric)} <span style="font-size:11px;color:var(--text-4);font-weight:400">${r.ml}</span></td><td style="text-align:right;color:var(--text-3)">${r.sub||'—'}</td><td style="text-align:right">${r.grade?`<b style="color:${gc(r.grade)}">${r.grade}</b>`:'<span style="color:var(--text-4)">—</span>'}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">이 기간 게시물 데이터 없음 — LinkedIn은 분석 시트 연동 또는 ⚙ 업로드 필요</td></tr>`;
-
-  // 잘 먹힌 콘텐츠 (시트)
-  const saCard=$('#saCard');
-  if(!li||!li.length){saCard.style.display='none';}
-  else{
-    saCard.style.display='';
-    const inR=li.filter(p=>weeks.includes(dateToWeek(p.date)));
-    const sa=inR.filter(p=>p.grade==='S'||p.grade==='A').sort((a,b)=>(b.impressions||0)-(a.impressions||0));
-    const hooks={};sa.forEach(p=>{if(p.hook)hooks[p.hook]=(hooks[p.hook]||0)+1;});
-    const th=Object.entries(hooks).sort((a,b)=>b[1]-a[1]).slice(0,5);
-    const saH=sa.length?sa.slice(0,5).map(p=>`<div class="sa-row"><span class="ell" style="font-weight:600;max-width:230px" title="${esc(p.title)}"><b style="color:#FF5D00;margin-right:6px">${p.grade}</b>${esc(p.title)}</span><span style="color:var(--text-4);white-space:nowrap">${fmt(p.impressions||0)}</span></div>`).join(''):'<div style="color:var(--text-4);font-size:12px;padding:8px 0">이 기간 S/A 등급 콘텐츠 없음</div>';
-    const hkH=th.length?th.map(([h,c])=>`<span class="chip">${esc(h)} <span style="color:var(--text-4)">×${c}</span></span>`).join(''):'<div style="color:var(--text-4);font-size:12px">데이터 없음</div>';
-    $('#saBox').innerHTML=`<div><div class="subt">S·A 등급 TOP</div>${saH}</div><div><div class="subt">잘 먹힌 훅</div>${hkH}</div>`;
-  }
+  $('#rankBody').innerHTML=rows.length?rows.slice(0,12).map(r=>`<tr><td><span class="tag ${r.ch==='linkedin'?'li':'blog'}">${r.ch==='linkedin'?'LinkedIn':'Blog'}</span></td><td style="font-weight:600" class="ell" title="${esc(r.title)}">${esc(r.title||'—')}</td><td style="text-align:right;color:var(--text-4);font-size:12px">${esc(r.date||'—')}</td><td style="text-align:right;font-weight:700">${fmt(r.metric)} <span style="font-size:11px;color:var(--text-4);font-weight:400">${r.ml}</span></td><td style="text-align:right;color:var(--text-3)">${r.sub||'—'}</td></tr>`).join(''):`<tr><td colspan="5" class="empty">이 기간 게시물 데이터 없음 — LinkedIn은 전체 게시물 XLS 업로드 또는 ⚙ 업로드 필요</td></tr>`;
 
   // 발행 ↔ 영향도
   renderRoi(weeks);
@@ -664,10 +645,36 @@ function stEl(type){return $(type==='linkedin'?'#stLi':type==='blog'?'#stBl':'#s
 function parseFile(file,type){
   const st=stEl(type);st.textContent='파싱 중…';
   const ext=file.name.split('.').pop().toLowerCase();
-  if(ext==='xls'||ext==='xlsx'){const r=new FileReader();r.onload=ev=>{try{const wb=XLSX.read(ev.target.result,{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]],rows=XLSX.utils.sheet_to_json(ws,{defval:''});if(!rows.length){st.textContent='⚠️ 데이터 없음';return;}if(type==='linkedin')importLinkedIn(rows,st);else importGA4Rows(rows,st);}catch(x){st.textContent='⚠️ '+x.message;}};r.readAsArrayBuffer(file);}
+  if(ext==='xls'||ext==='xlsx'){const r=new FileReader();r.onload=ev=>{try{const wb=XLSX.read(ev.target.result,{type:'array'});if(type==='linkedin'){let handled=false;for(const sn of wb.SheetNames){const ws=wb.Sheets[sn];const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});if(!aoa.length)continue;const flat=aoa.slice(0,3).flat().map(v=>String(v).trim());if(flat.includes('게시물의 제목')){importLiPosts(aoa,st);handled=true;}else if(flat.includes('날짜')&&flat.some(v=>v.includes('노출(소셜+스폰서)'))){const rows=XLSX.utils.sheet_to_json(ws,{defval:''});if(rows.length)importLiContent(rows,st);handled=true;}else if(flat.includes('날짜')&&flat.some(v=>v==='총 팔로워'||v.includes('순방문자'))){const rows=XLSX.utils.sheet_to_json(ws,{defval:''});if(rows.length)importLiVF(rows,st);handled=true;}}if(!handled){const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{defval:''});if(rows.length)importLinkedIn(rows,st);else st.textContent='⚠️ 데이터 없음';}}else{const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{defval:''});if(!rows.length){st.textContent='⚠️ 데이터 없음';return;}importGA4Rows(rows,st);}}catch(x){st.textContent='⚠️ '+x.message;}};r.readAsArrayBuffer(file);}
   else{const r=new FileReader();r.onload=ev=>{const text=ev.target.result;try{if(type==='blog')importBlogCSV(text,st);else if(type==='ga4'&&text.trimStart().startsWith('#'))importGA4Text(text,st);else Papa.parse(text,{header:true,skipEmptyLines:true,complete(res){if(!res.data?.length){st.textContent='⚠️ 데이터 없음';return;}if(type==='linkedin')importLinkedIn(res.data,st);else importGA4Rows(res.data,st);}});}catch(x){st.textContent='⚠️ '+x.message;}};r.readAsText(file,'UTF-8');}
 }
 function importLinkedIn(rows,st){if(!rows.length){st.textContent='⚠️ 없음';return;}const fk=Object.keys(rows[0])[0],av=Object.values(rows[0]).map(v=>String(v).trim());const isC=fk.length>20&&av.includes('날짜')&&av.includes('노출(소셜+스폰서)');const isV=fk.trim()==='날짜';if(isC)importLiContent(rows,st);else if(isV)importLiVF(rows,st);else st.textContent='⚠️ 포맷 인식 실패';}
+function importLiPosts(aoa,st){
+  // Find header row (the row containing '게시물의 제목')
+  let hdrIdx=-1;
+  for(let i=0;i<Math.min(aoa.length,5);i++){if(aoa[i].map(v=>String(v).trim()).includes('게시물의 제목')){hdrIdx=i;break;}}
+  if(hdrIdx<0){st.textContent='⚠️ 게시물 헤더 없음';return;}
+  const hdr=aoa[hdrIdx].map(v=>String(v).trim());
+  const idx={};hdr.forEach((h,i)=>{if(h)idx[h]=i;});
+  const num=v=>Number(String(v||'').replace(/[^0-9.]/g,''))||0;
+  const posts=[];
+  for(let i=hdrIdx+1;i<aoa.length;i++){
+    const row=aoa[i];
+    const title=String(row[idx['게시물의 제목']]??'').trim();
+    if(!title)continue;
+    const impressions=num(row[idx['노출수']]);
+    if(!impressions)continue;
+    const dateRaw=String(row[idx['만든 날짜']]??'').trim();
+    let date='';
+    if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateRaw)){const p=dateRaw.split('/');date=`${p[2]}-${p[0].padStart(2,'0')}-${p[1].padStart(2,'0')}`;}
+    else date=dateRaw;
+    posts.push({date,title,impressions,reactions:num(row[idx['추천']]),comments:num(row[idx['댓글']]),clicks:num(row[idx['클릭']])});
+  }
+  if(!posts.length){st.textContent='⚠️ 게시물 없음';return;}
+  DB['__li_posts__']=posts;
+  saveData();render();
+  st.textContent=`✅ LinkedIn 게시물 ${posts.length}개 임포트`;
+}
 function importLiContent(rows,st){const hr=rows[0],ntk={};Object.entries(hr).forEach(([k,v])=>{if(v)ntk[String(v)]=k;});const dk=ntk['날짜'];if(!dk){st.textContent='⚠️ 날짜 없음';return;}const aff=new Set();rows.slice(1).forEach(r=>{const w=dateToWeek(String(r[dk]||''));if(w)aff.add(w);});aff.forEach(w=>{if(DB[w]){DB[w].impressions=DB[w].impressionsSocial=DB[w].impressionsSponsor=0;DB[w].clicks=DB[w].likes=DB[w].comments=DB[w].shares=0;}});let cnt=0;rows.slice(1).forEach(r=>{const w=dateToWeek(String(r[dk]||''));if(!w)return;if(!DB[w])DB[w]={};const d=DB[w],n=k=>Number(r[ntk[k]])||0;d.impressions=(d.impressions||0)+n('노출(소셜+스폰서)');d.impressionsSocial=(d.impressionsSocial||0)+n('노출(소셜)');d.impressionsSponsor=(d.impressionsSponsor||0)+n('노출(스폰서)');d.clicks=(d.clicks||0)+n('클릭(소셜+스폰서)');d.likes=(d.likes||0)+n('반응(소셜+스폰서)');d.comments=(d.comments||0)+n('댓글(소셜+스폰서)');d.shares=(d.shares||0)+n('퍼감(전체)');cnt++;});finishImport(st,`✅ 게시물 ${cnt}일치 임포트`);}
 function importLiVF(rows,st){const cols=Object.keys(rows[0]);const vc=cols.find(k=>k.includes('전체')&&k.includes('순방문자')&&k.includes('데스크톱+모바일'));const fc=cols.find(k=>k==='총 팔로워');if(!vc&&!fc){st.textContent='⚠️ 인식 실패';return;}const aff=new Set();rows.forEach(r=>{const w=dateToWeek(String(r['날짜']||''));if(w)aff.add(w);});aff.forEach(w=>{if(DB[w]){if(vc)DB[w].liPageVisitors=0;if(fc)DB[w].newFollowers=0;}});let cnt=0;rows.forEach(r=>{const w=dateToWeek(String(r['날짜']||''));if(!w)return;if(!DB[w])DB[w]={};if(vc)DB[w].liPageVisitors=(DB[w].liPageVisitors||0)+(Number(r[vc])||0);if(fc)DB[w].newFollowers=(DB[w].newFollowers||0)+(Number(r[fc])||0);cnt++;});if(fc)recalcFollowers();finishImport(st,`✅ ${vc?'방문자':'팔로워'} ${cnt}일치`);}
 const BASELINE_WEEK='2026-W12',BASELINE_FOLLOWERS=520;
@@ -679,11 +686,8 @@ function finishImport(st,msg){saveData();render();st.textContent=msg;}
 
 /* ════════ 8. SOURCE SYNC ════════ */
 const CALENDAR_CSV_URL='https://docs.google.com/spreadsheets/d/1bnLQypIuMb0gw0RxzwYVkqGBdN8KSA4_TXSuogaOWak/export?format=csv&gid=658998951';
-const LINKEDIN_CSV_URL='https://docs.google.com/spreadsheets/d/1c23pJ1OFXh9YMY2gZaHFP0ynIJpYepUM8b1gZTijzOA/export?format=csv';
 function normChannel(ch){const s=(ch||'').trim().toLowerCase();if(s.includes('링크드')||s==='linkedin')return'linkedin';if(s.includes('블로그')||s==='blog')return'blog';if(s.includes('채용')||s.includes('recruit'))return'recruit';return s||'other';}
-function pickCol(row,names){const keys=Object.keys(row);for(const n of names)for(const k of keys)if(k.trim()===n)return row[k];return'';}
 async function syncCalendar(){try{const res=await fetch(CALENDAR_CSV_URL,{cache:'no-store'});if(!res.ok)throw 0;const{data}=Papa.parse(await res.text(),{header:true,skipEmptyLines:true});const ev=data.map(r=>({date:(r['시기']||'').trim(),title:(r['주요 주제']||'').trim(),channel:normChannel(r['채널']),url:(r['URL']||r['url']||r['링크']||'').trim()})).filter(e=>e.date&&e.title);if(ev.length){DB['__calendar__']=ev;render();}}catch(e){console.warn('[calendar] sync skip');}}
-async function syncLinkedIn(){try{const res=await fetch(LINKEDIN_CSV_URL,{cache:'no-store'});if(!res.ok)throw 0;const{data}=Papa.parse(await res.text(),{header:true,skipEmptyLines:true});const num=v=>Number(String(v||'').replace(/[^0-9.-]/g,''))||0;const posts=data.map(r=>({date:String(pickCol(r,['날짜','발행일','발행 날짜','date','Date'])||'').trim(),title:String(pickCol(r,['제목','콘텐츠','게시물','title','Title'])||'').trim(),topic:String(pickCol(r,['주제','주제(1차)','카테고리'])||'').trim(),hook:String(pickCol(r,['훅','훅(2차)','hook'])||'').trim(),impressions:num(pickCol(r,['노출','노출수','impressions'])),reactions:num(pickCol(r,['반응','반응수','좋아요'])),comments:num(pickCol(r,['댓글','댓글수'])),clicks:num(pickCol(r,['클릭','클릭수'])),grade:String(pickCol(r,['등급','grade','Grade'])||'').trim().toUpperCase().slice(0,1)})).filter(p=>p.title&&p.date);if(posts.length){DB['__li_posts__']=posts;render();}}catch(e){console.warn('[linkedin] sync skip');}}
 
 /* ════════ 9. STALE ════════ */
 function checkStale(){if(!__LAST_UPDATED__||__LAST_UPDATED__==='—')return;const p=__LAST_UPDATED__.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);if(!p)return;const diff=Math.floor((Date.now()-new Date(+p[1],+p[2]-1,+p[3]))/864e5);if(diff>=7){const el=$('#stale');el.textContent=`데이터가 ${diff}일 전 업데이트되었습니다. update.sh 실행을 권장합니다.`;el.style.display='block';}}
@@ -694,7 +698,6 @@ restoreUi();
 checkStale();
 render();
 syncCalendar();
-syncLinkedIn();
 </script>
 </body>
 </html>
