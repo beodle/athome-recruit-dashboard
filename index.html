@@ -231,12 +231,21 @@ tbody tr:hover td{background:var(--bg-soft);}
         <tbody id="rankBody"></tbody>
       </table>
     </div>
-    <div class="card pad">
-      <div class="card-h"><div class="dot" style="background:var(--accent)"></div><span class="t">발행 콘텐츠 ↔ 영향도</span><span class="sub" id="roiSub"></span></div>
-      <table>
-        <thead><tr><th>콘텐츠</th><th>채널</th><th style="text-align:right">발행 주차</th><th style="text-align:right">영향도</th></tr></thead>
-        <tbody id="roiBody"></tbody>
-      </table>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px">
+      <div class="card pad">
+        <div class="card-h"><div class="dot" style="background:var(--blog)"></div><span class="t">Blog 성과 TOP</span><span class="sub" id="roiBlogSub"></span></div>
+        <table>
+          <thead><tr><th>콘텐츠</th><th style="text-align:right">조회</th><th style="text-align:right">평균 참여</th></tr></thead>
+          <tbody id="roiBlogBody"></tbody>
+        </table>
+      </div>
+      <div class="card pad">
+        <div class="card-h"><div class="dot" style="background:var(--li)"></div><span class="t">LinkedIn 성과 TOP</span><span class="sub" id="roiLiSub"></span></div>
+        <table>
+          <thead><tr><th>콘텐츠</th><th style="text-align:right">노출</th><th style="text-align:right">반응</th></tr></thead>
+          <tbody id="roiLiBody"></tbody>
+        </table>
+      </div>
     </div>
   </section>
 
@@ -577,20 +586,25 @@ function renderContribution(R){
 }
 function engStr(sec,pv){if(!pv||!sec)return'—';const a=Math.round(sec/pv),m=Math.floor(a/60),s=a%60;return `${m}:${String(s).padStart(2,'0')}`;}
 function renderRoi(weeks){
-  const cal=DB['__calendar__'];
-  const tbody=$('#roiBody');
-  if(!cal||!cal.length){tbody.innerHTML='<tr><td colspan="4" class="empty">캘린더 데이터 없음</td></tr>';$('#roiSub').textContent='';return;}
-  const norm=s=>String(s||'').toLowerCase().replace(/앳홈\s*블로그/g,'').replace(/편집본/g,'').replace(/[\[\]【】〈〉()（）·\-—–_/,，.。!?！？\s]/g,'');
-  const items=cal.filter(e=>e.date&&weeks.includes(dateToWeek(e.date))).map(e=>{
-    const wid=dateToWeek(e.date),tn=norm(e.title);let val=null,kind='na',ml='';
-    if(e.channel==='linkedin'){ml='노출';const ps=(DB['__li_posts__']||[]).filter(p=>dateToWeek(p.date)===wid).concat(DB[wid]?.posts||[]);const m=ps.find(p=>{const pn=norm(p.title);return pn&&tn&&(pn.includes(tn)||tn.includes(pn));});if(m&&m.impressions){val=m.impressions;kind='direct';}}
-    else if(e.channel==='blog'||e.channel==='블로그'){ml='조회';const bp=DB[wid]?.blog_posts||[];const m=bp.find(p=>{const pn=norm(p.title);return pn&&tn&&(pn.includes(tn)||tn.includes(pn));});if(m&&m.pageviews){val=m.pageviews;kind='direct';}}
-    return{...e,wid,val,kind,ml};
-  }).sort((a,b)=>(a.kind!==b.kind)?(a.kind==='direct'?-1:1):(b.val||0)-(a.val||0));
-  if(!items.length){tbody.innerHTML='<tr><td colspan="4" class="empty">이 기간에 발행된 콘텐츠가 없습니다 — 범위를 넓혀보세요</td></tr>';$('#roiSub').textContent='';return;}
-  const direct=items.filter(i=>i.kind==='direct').length;
-  $('#roiSub').textContent=`직접 측정 ${direct} / ${items.length}건`;
-  tbody.innerHTML=items.map(r=>`<tr style="${r.kind==='direct'?'':'opacity:.55'}"><td style="font-weight:600" class="ell" title="${esc(r.title)}">${esc(r.title)}</td><td><span class="tag ${r.channel==='linkedin'?'li':(r.channel==='blog'||r.channel==='블로그')?'blog':'n'}">${esc(r.channel)}</span></td><td style="text-align:right"><span class="wbadge">${weekLabel(r.wid)}</span></td><td style="text-align:right">${r.kind==='direct'?`<b style="color:var(--text-1)">${fmt(r.val)}</b> <span style="font-size:11px;color:var(--text-4)">${r.ml}</span>`:'<span style="font-size:12px;color:var(--text-4)">— 측정 불가</span>'}</td></tr>`).join('');
+  // 캘린더 제목 매칭(매칭률 0) 대신 실제 성과 데이터를 직접 사용 — 랭킹과 동일 소스, 채널별 2카드
+  // ── Blog: blog_posts를 path별 집계, 조회수 상위 ──
+  const bmap={};
+  weeks.forEach(w=>(DB[w]?.blog_posts||[]).forEach(p=>{if(isNavPage(p))return;const k=(p.path&&p.path!=='/')?p.path:(p.title||'');if(!k)return;if(!bmap[k])bmap[k]={title:p.title||p.path,pv:0,eng:0};bmap[k].pv+=p.pageviews||0;bmap[k].eng+=p.engTime||0;}));
+  const blog=Object.values(bmap).sort((a,b)=>(b.pv||0)-(a.pv||0));
+  $('#roiBlogSub').textContent=blog.length?`${blog.length}개 중 상위 ${Math.min(8,blog.length)}`:'';
+  $('#roiBlogBody').innerHTML=blog.length
+    ?blog.slice(0,8).map(b=>`<tr><td style="font-weight:600" class="ell" title="${esc(b.title)}">${esc(b.title)}</td><td style="text-align:right;font-weight:700">${fmt(b.pv)}</td><td style="text-align:right;color:var(--text-3)">${engStr(b.eng,b.pv)}</td></tr>`).join('')
+    :'<tr><td colspan="3" class="empty">이 기간 블로그 게시물 데이터 없음</td></tr>';
+  // ── LinkedIn: 게시물별 노출 상위 (전체 게시물 XLS 우선, 없으면 주차 posts) ──
+  const lrows=[];
+  const li=DB['__li_posts__'];
+  if(li&&li.length)li.filter(p=>weeks.includes(dateToWeek(p.date))).forEach(p=>lrows.push({title:p.title,imp:p.impressions||0,sub:`${fmt(p.reactions||0)} 반응`}));
+  else weeks.forEach(w=>(DB[w]?.posts||[]).forEach(p=>lrows.push({title:p.title,imp:p.impressions||0,sub:`${fmt((p.likes||0)+(p.comments||0)+(p.shares||0))} 반응`})));
+  lrows.sort((a,b)=>(b.imp||0)-(a.imp||0));
+  $('#roiLiSub').textContent=lrows.length?`${lrows.length}개 중 상위 ${Math.min(8,lrows.length)}`:'';
+  $('#roiLiBody').innerHTML=lrows.length
+    ?lrows.slice(0,8).map(r=>`<tr><td style="font-weight:600" class="ell" title="${esc(r.title)}">${esc(r.title)}</td><td style="text-align:right;font-weight:700">${fmt(r.imp)}</td><td style="text-align:right;color:var(--text-3)">${r.sub}</td></tr>`).join('')
+    :'<tr><td colspan="3" class="empty">이 기간 LinkedIn 게시물 데이터 없음 — 전체 게시물 XLS 업로드 필요</td></tr>';
 }
 
 /* ── ③ 전환·품질 ── */
