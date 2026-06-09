@@ -511,7 +511,12 @@ function renderAwareness(R){
   else{
     box.style.display='';empty.style.display='none';
     const ann={};const cal=DB['__calendar__'];
-    if(cal)cal.filter(e=>e.date&&weeks.includes(dateToWeek(e.date))).forEach((e,i)=>{const idx=weeks.indexOf(dateToWeek(e.date));if(idx<0)return;ann['c'+i]={type:'line',xMin:idx,xMax:idx,borderColor:'rgba(0,0,0,.10)',borderWidth:1,borderDash:[4,3],label:{display:true,content:e.title.slice(0,11),position:'start',font:{size:9,family:FONT},color:'#A8A29A',backgroundColor:'transparent'}};});
+    if(cal){
+      // 같은 주차에 여러 건이 발행되면 라벨이 한 자리에 겹치므로 주차별로 묶어 1개만 표기
+      const byIdx={};
+      cal.forEach(e=>{if(!e.date)return;const wk=dateToWeek(e.date);if(!weeks.includes(wk))return;const idx=weeks.indexOf(wk);if(idx<0)return;(byIdx[idx]||(byIdx[idx]=[])).push(e);});
+      Object.entries(byIdx).forEach(([idx,items])=>{const n=items.length;const content=n===1?items[0].title.slice(0,11):`${n}건 발행`;ann['c'+idx]={type:'line',xMin:+idx,xMax:+idx,borderColor:'rgba(0,0,0,.10)',borderWidth:1,borderDash:[4,3],label:{display:true,content,position:'start',font:{size:9,family:FONT},color:'#A8A29A',backgroundColor:'transparent'}};});
+    }
     charts.aw=new Chart($('#awChart'),{
       data:{labels:weeks.map(weekLabel),datasets:[
         {type:'bar',label:'LinkedIn 노출',data:weeks.map(w=>DB[w]?.impressions||0),backgroundColor:'rgba(74,69,64,.15)',borderRadius:4,yAxisID:'y',order:3},
