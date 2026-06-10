@@ -224,13 +224,6 @@ tbody tr:hover td{background:var(--bg-soft);}
   <!-- ② 콘텐츠 기여 -->
   <section class="sec">
     <div class="sec-head"><span class="sec-no">02</span><span class="sec-title">콘텐츠 기여</span><span class="sec-desc">무엇이 먹혔나 → 다음 액션</span><span class="sec-pub" id="pubCount"></span></div>
-    <div class="card pad mb">
-      <div class="card-h"><div class="dot" style="background:var(--accent)"></div><span class="t">게시물 성과 랭킹</span><span class="sub" id="rankSub"></span></div>
-      <table>
-        <thead><tr><th>채널</th><th>게시물</th><th style="text-align:right">날짜</th><th style="text-align:right">대표 지표</th><th style="text-align:right">반응·체류</th></tr></thead>
-        <tbody id="rankBody"></tbody>
-      </table>
-    </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px">
       <div class="card pad">
         <div class="card-h"><div class="dot" style="background:var(--blog)"></div><span class="t">Blog 성과 TOP</span><span class="sub" id="roiBlogSub"></span></div>
@@ -569,19 +562,7 @@ function renderContribution(R){
     const blN=calCur.filter(e=>e.channel==='blog'||e.channel==='블로그').length;
     pubEl.innerHTML=curPub?`이번 기간 발행 ${curPub}건 · LI ${liN} · Blog ${blN}`:'이번 기간 발행 없음';
   }
-  // 게시물 랭킹
-  const rows=[];
-  const bmap={};
-  weeks.forEach(w=>(DB[w]?.blog_posts||[]).forEach(p=>{if(isNavPage(p))return;const k=(p.path&&p.path!=='/')?p.path:(p.title||'');if(!k)return;if(!bmap[k])bmap[k]={title:p.title||p.path,pv:0,eng:0};bmap[k].pv+=p.pageviews||0;bmap[k].eng+=p.engTime||0;}));
-  Object.values(bmap).forEach(b=>rows.push({ch:'blog',title:b.title,date:'',metric:b.pv,ml:'조회',sub:engStr(b.eng,b.pv)}));
-  const li=DB['__li_posts__'];
-  if(li&&li.length)li.filter(p=>weeks.includes(dateToWeek(p.date))).forEach(p=>rows.push({ch:'linkedin',title:p.title,date:p.date,metric:p.impressions||0,ml:'노출',sub:`${fmt(p.reactions||0)} 반응`}));
-  else weeks.forEach(w=>(DB[w]?.posts||[]).forEach(p=>rows.push({ch:'linkedin',title:p.title,date:p.date||'',metric:p.impressions||0,ml:'노출',sub:`${fmt((p.likes||0)+(p.comments||0)+(p.shares||0))} 반응`})));
-  rows.sort((a,b)=>(b.metric||0)-(a.metric||0));
-  $('#rankSub').textContent=rows.length?`${rows.length}개 중 상위 12`:'';
-  $('#rankBody').innerHTML=rows.length?rows.slice(0,12).map(r=>`<tr><td><span class="tag ${r.ch==='linkedin'?'li':'blog'}">${r.ch==='linkedin'?'LinkedIn':'Blog'}</span></td><td style="font-weight:600" class="ell" title="${esc(r.title)}">${esc(r.title||'—')}</td><td style="text-align:right;color:var(--text-4);font-size:12px">${esc(r.date||'—')}</td><td style="text-align:right;font-weight:700">${fmt(r.metric)} <span style="font-size:11px;color:var(--text-4);font-weight:400">${r.ml}</span></td><td style="text-align:right;color:var(--text-3)">${r.sub||'—'}</td></tr>`).join(''):`<tr><td colspan="5" class="empty">이 기간 게시물 데이터 없음 — LinkedIn은 전체 게시물 XLS 업로드 또는 ⚙ 업로드 필요</td></tr>`;
-
-  // 발행 ↔ 영향도
+  // 게시물 성과: Blog/LinkedIn 2카드 (통합 랭킹과 중복되어 통합 랭킹 제거)
   renderRoi(weeks);
 }
 function engStr(sec,pv){if(!pv||!sec)return'—';const a=Math.round(sec/pv),m=Math.floor(a/60),s=a%60;return `${m}:${String(s).padStart(2,'0')}`;}
