@@ -422,7 +422,7 @@ function render(){
 /* ── 공통 빌더 ── */
 function spark(weeks,field){
   if(weeks.length<2)return'';
-  const vals=weeks.map(w=>DB[w]?.[field]||0);
+  const vals=weeks.map(w=>{const d=DB[w]||{};return typeof field==='function'?(field(d)||0):(d[field]||0);});
   const mx=Math.max(...vals),mn=Math.min(...vals),rg=mx-mn||1,W=54,H=24;
   const pts=vals.map((v,i)=>`${(i/(vals.length-1)*W).toFixed(1)},${(H-((v-mn)/rg)*(H-4)-2).toFixed(1)}`).join(' ');
   const c=vals[vals.length-1]>=vals[vals.length-2]?'#16A34A':'#DC2626';
@@ -472,7 +472,7 @@ function renderScorecard(R){
     kpi('LinkedIn 노출',fmt(curImp),'기간 합계',curImp,prevImp,'impressions',spk),
     kpi('채용페이지 방문',fmt(curUsr),'기간 합계',curUsr,prevUsr,'users',spk),
     kpi('블로그 조회',fmt(curBlog),'기간 합계',curBlog,prevBlog,'blog_pageviews',spk),
-    kpi('평균 참여 시간',curBlogUsr?`${avgMin}:${avgSec}`:'—','분:초',curAvg,prevAvg,null,null),
+    kpi('평균 참여 시간',curBlogUsr?`${avgMin}:${avgSec}`:'—','분:초',curAvg,prevAvg,d=>d.blog_users?d.blog_engTime/d.blog_users:0,spk),
   ].join('');
 
   // 핵심 변화 인사이트
