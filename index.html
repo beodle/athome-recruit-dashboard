@@ -56,6 +56,10 @@ body{font-family:var(--font);font-size:14px;color:var(--text-1);background:var(-
 .range-menu button[data-range]{display:block;width:100%;text-align:left;background:none;border:none;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer;}
 .range-menu button[data-range]:hover{background:var(--bg-soft);}
 .range-menu button[data-range].on{background:var(--bg-soft);color:var(--text-1);font-weight:700;}
+.seg-group{display:inline-flex;gap:2px;background:var(--bg-soft);border-radius:9px;padding:3px;margin-right:6px;}
+.seg-group button{border:none;background:none;border-radius:7px;padding:6px 11px;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--text-3);cursor:pointer;white-space:nowrap;transition:color .12s;}
+.seg-group button:hover{color:var(--text-1);}
+.seg-group button.on{background:#fff;color:var(--text-1);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.08);}
 .range-custom{border-top:1px solid var(--border);margin-top:7px;padding:11px 8px 4px;}
 .range-custom label{display:block;font-size:10px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;}
 .range-custom .row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-4);}
@@ -176,6 +180,11 @@ tbody tr:hover td{background:var(--bg-soft);}
     </div>
     <div class="spacer"></div>
     <div class="range">
+      <div class="seg-group">
+        <button data-range="1w" onclick="setRange('1w')">1주</button>
+        <button data-range="4w" onclick="setRange('4w')">4주</button>
+        <button data-range="8w" onclick="setRange('8w')">8주</button>
+      </div>
       <button class="range-nav" id="prevBtn" onclick="shiftRange(-1)" title="이전 기간">←</button>
       <button class="range-trigger" onclick="toggleRange(event)">📅 <span id="rangeLabel">—</span> <span class="range-caret">▾</span></button>
       <button class="range-nav" id="nextBtn" onclick="shiftRange(1)" title="다음 기간">→</button>
@@ -382,7 +391,7 @@ function computeRange(){
     const a=dateToWeek(range.start),b=dateToWeek(range.end);
     weeks=ws.filter(w=>(!a||w>=a)&&(!b||w<=b)); if(!weeks.length)weeks=ws.slice(-4);
   }else{
-    const n=range.mode==='all'?ws.length:range.mode==='12w'?12:range.mode==='8w'?8:4;
+    const n=range.mode==='all'?ws.length:range.mode==='12w'?12:range.mode==='8w'?8:range.mode==='1w'?1:4;
     const maxOff=Math.max(0,ws.length-n); range.offset=Math.min(Math.max(0,range.offset),maxOff);
     const end=ws.length-range.offset; weeks=ws.slice(Math.max(0,end-n),end);
   }
@@ -415,7 +424,7 @@ function render(){
   const fi=R.weeks.length?ws.indexOf(R.weeks[0]):0, li=R.weeks.length?ws.indexOf(R.weeks[R.weeks.length-1]):ws.length-1;
   const fixed=range.mode==='all'||range.mode==='custom';
   $('#prevBtn').disabled=fixed||fi<=0; $('#nextBtn').disabled=fixed||li>=ws.length-1;
-  document.querySelectorAll('#rangeMenu [data-range]').forEach(b=>b.classList.toggle('on',b.dataset.range===range.mode));
+  document.querySelectorAll('[data-range]').forEach(b=>b.classList.toggle('on',b.dataset.range===range.mode));
   renderScorecard(R); renderAwareness(R); renderContribution(R); renderConversion(R);
 }
 
