@@ -453,7 +453,17 @@ function kpi(label,val,sub,cur,prev,sparkField,sparkWeeks){
   const m=mom(cur,prev),cls=m?m.dir:'';
   return `<div class="kpi ${cls}"><div class="kpi-top"><span class="kpi-label">${label}</span>${sparkField?spark(sparkWeeks,sparkField):''}</div><div class="kpi-val">${val}</div><div class="kpi-sub">${sub}</div>${badge(m)}</div>`;
 }
-function lastFollowers(weeks){const f=weeks.filter(w=>DB[w]?.followers);return f.length?DB[f[f.length-1]].followers:0;}
+function lastFollowers(weeks){
+  if(!weeks.length)return 0;
+  const inRange=weeks.filter(w=>DB[w]?.followers);
+  if(inRange.length)return DB[inRange[inRange.length-1]].followers;
+  // 범위 내 스냅샷 없으면 전체에서 가장 가까운 값(과거 우선, 없으면 미래) — 팔로워는 누적이라 빈칸 방지
+  const all=sortedWeeks().filter(w=>DB[w]?.followers);
+  if(!all.length)return 0;
+  const last=weeks[weeks.length-1];
+  const past=all.filter(w=>w<=last);
+  return DB[past.length?past[past.length-1]:all[0]].followers;
+}
 
 /* ── 성과 스코어카드 ── */
 function renderScorecard(R){
