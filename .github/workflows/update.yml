@@ -39,4 +39,8 @@ jobs:
       - name: Run update.sh (extract → bake → commit → push)
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/ga4-key.json
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+          LINKEDIN_REFRESH_TOKEN: ${{ secrets.LINKEDIN_REFRESH_TOKEN }}
+          LINKEDIN_ORG_URN: urn:li:organization:90478773
         run: bash update.sh

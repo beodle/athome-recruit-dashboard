@@ -140,6 +140,14 @@ p.write_text(src)
 print(f'→ {len(new_data)}주 머지 완료')
 PYEOF
 
+# ── 2.5 LinkedIn 수집 (env 있을 때만: 노출·게시물·팔로워) ──
+if [ -n "${LINKEDIN_REFRESH_TOKEN:-}" ]; then
+  echo "→ LinkedIn 수집..."
+  python3 linkedin_fetch.py || echo "⚠️ LinkedIn 수집 실패 — GA4만 반영"
+else
+  echo "→ LinkedIn env 없음, 건너뜀 (GA4만 갱신)"
+fi
+
 # ── 3. 커밋·푸시 ──────────────────────────────────────────
 if git diff --quiet index.html; then
   echo "→ 변경 없음, 종료"
