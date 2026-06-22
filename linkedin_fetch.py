@@ -122,7 +122,7 @@ def main():
         week_imp[wk] = week_imp.get(wk, 0) + imp
         li_posts.append({
             "date": date,
-            "title": (p["commentary"].strip().split("\n")[0])[:80],
+            "title": re.sub(r'\\([<>*_~\[\]()])', r'\1', p["commentary"].strip().split("\n")[0])[:80],
             "impressions": imp,
             "reactions": int(s.get("likeCount") or 0),
             "comments": int(s.get("commentCount") or 0),

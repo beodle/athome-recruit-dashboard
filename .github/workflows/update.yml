@@ -24,7 +24,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install GA4 client
-        run: pip install --quiet google-analytics-data
+        run: pip install --quiet google-analytics-data requests
 
       - name: Restore GA4 service account key
         run: printf '%s' "$GA4_SA_KEY" > "$RUNNER_TEMP/ga4-key.json"
