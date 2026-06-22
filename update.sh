@@ -24,10 +24,12 @@ echo "→ 갱신 대상: $WEEKS_STR"
 
 # ── 2. GA4 추출 + 베이크 + 마지막 갱신일 갱신 ───────────────
 export WEEKS="$WEEKS_STR"
-GOOGLE_APPLICATION_CREDENTIALS="/Users/jangmyeongseong/Desktop/claude code/clauide-mcp-c1d375c27ae7.json" \
+# 로컬에선 기본 키 경로, CI(GitHub Actions)에선 미리 export된 값을 사용
+: "${GOOGLE_APPLICATION_CREDENTIALS:=/Users/jangmyeongseong/Desktop/claude code/clauide-mcp-c1d375c27ae7.json}"
+export GOOGLE_APPLICATION_CREDENTIALS
 python3 << 'PYEOF'
 import os, re, json
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, timezone
 from pathlib import Path
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import (
@@ -130,9 +132,10 @@ for wk, fields in new_data.items():
     baked[wk].update(fields)
 src = src[:m.start(2)] + json.dumps(baked, ensure_ascii=False) + src[m.end(2):]
 
-today = date.today()
+now = datetime.now(timezone(timedelta(hours=9)))  # KST 기준 갱신 시각
+stamp = f"{now.year}년 {now.month}월 {now.day}일 {now.hour:02d}:{now.minute:02d}"
 src = re.sub(r'const __LAST_UPDATED__ = "[^"]*";',
-             f'const __LAST_UPDATED__ = "{today.year}년 {today.month}월 {today.day}일";', src)
+             f'const __LAST_UPDATED__ = "{stamp}";', src)
 p.write_text(src)
 print(f'→ {len(new_data)}주 머지 완료')
 PYEOF

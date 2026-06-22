@@ -200,6 +200,7 @@ tbody tr:hover td{background:var(--bg-soft);}
         </div>
       </div>
     </div>
+    <span id="lastUpd" style="font-size:11.5px;color:var(--text-3);margin-right:10px;white-space:nowrap;align-self:center"></span>
     <div class="actions">
       <button class="btn" onclick="exportWithData()">↓ 내보내기</button>
       <button class="btn btn--primary" onclick="openInput()">+ 직접 입력</button>
@@ -705,6 +706,7 @@ function checkStale(){if(!__LAST_UPDATED__||__LAST_UPDATED__==='—')return;cons
 loadData();
 restoreUi();
 checkStale();
+if($('#lastUpd'))$('#lastUpd').textContent='⟳ 최근 업데이트 '+__LAST_UPDATED__;
 render();
 syncCalendar();
 </script>

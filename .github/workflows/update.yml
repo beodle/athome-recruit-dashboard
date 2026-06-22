@@ -1,0 +1,42 @@
+name: Refresh GA4 Dashboard
+
+# 매주 월요일 KST 09:00 자동 갱신 + Actions 탭에서 수동 실행(Run workflow) 가능
+on:
+  schedule:
+    - cron: '0 0 * * 1'   # 00:00 UTC = 월요일 09:00 KST
+  workflow_dispatch:
+
+permissions:
+  contents: write          # update.sh의 git push 허용
+
+concurrency:
+  group: ga4-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install GA4 client
+        run: pip install --quiet google-analytics-data
+
+      - name: Restore GA4 service account key
+        run: printf '%s' "$GA4_SA_KEY" > "$RUNNER_TEMP/ga4-key.json"
+        env:
+          GA4_SA_KEY: ${{ secrets.GA4_SA_KEY }}
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Run update.sh (extract → bake → commit → push)
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/ga4-key.json
+        run: bash update.sh
