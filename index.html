@@ -42,6 +42,11 @@ body{font-family:var(--font);font-size:14px;color:var(--text-1);background:var(-
 .btn--primary{background:var(--accent);color:#fff;border-color:transparent;font-weight:700;}
 .btn--primary:hover{opacity:.9;color:#fff;}
 .btn--icon{padding:8px 11px;}
+.last-upd{font-size:11.5px;color:var(--text-4);white-space:nowrap;align-self:center;padding-left:14px;border-left:1px solid var(--border-2);}
+.more{position:relative;}
+.more-menu{min-width:190px;}
+.more-menu button{display:block;width:100%;text-align:left;background:none;border:none;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-2);cursor:pointer;white-space:nowrap;}
+.more-menu button:hover{background:var(--bg-soft);color:var(--text-1);}
 
 /* ── RANGE FILTER ── */
 .range{position:relative;display:flex;align-items:center;gap:3px;}
@@ -163,7 +168,7 @@ tbody tr:hover td{background:var(--bg-soft);}
 
 @media(max-width:820px){
   .kpis{grid-template-columns:repeat(2,1fr);} .grid2{grid-template-columns:1fr;}
-  .topbar-in{flex-wrap:wrap;} .brand span{display:none;}
+  .topbar-in{flex-wrap:wrap;} .brand span{display:none;} .last-upd{display:none;} .seg-group button{padding:6px 9px;}
 }
 @media print{ .topbar,.btn,.acc-btn{display:none;} .card,.kpi{box-shadow:none;break-inside:avoid;} body{background:#fff;} }
 </style>
@@ -184,14 +189,12 @@ tbody tr:hover td{background:var(--bg-soft);}
         <button data-range="1w" onclick="setRange('1w')">1주</button>
         <button data-range="4w" onclick="setRange('4w')">4주</button>
         <button data-range="8w" onclick="setRange('8w')">8주</button>
+        <button data-range="12w" onclick="setRange('12w')">12주</button>
       </div>
       <button class="range-nav" id="prevBtn" onclick="shiftRange(-1)" title="이전 기간">←</button>
       <button class="range-trigger" onclick="toggleRange(event)">📅 <span id="rangeLabel">—</span> <span class="range-caret">▾</span></button>
       <button class="range-nav" id="nextBtn" onclick="shiftRange(1)" title="다음 기간">→</button>
       <div class="range-menu" id="rangeMenu" onclick="event.stopPropagation()">
-        <button data-range="4w" onclick="setRange('4w')">최근 4주</button>
-        <button data-range="8w" onclick="setRange('8w')">최근 8주</button>
-        <button data-range="12w" onclick="setRange('12w')">최근 12주</button>
         <button data-range="all" onclick="setRange('all')">전체 기간</button>
         <div class="range-custom">
           <label>사용자 지정</label>
@@ -200,11 +203,16 @@ tbody tr:hover td{background:var(--bg-soft);}
         </div>
       </div>
     </div>
-    <span id="lastUpd" style="font-size:11.5px;color:var(--text-3);margin-right:10px;white-space:nowrap;align-self:center"></span>
+    <span id="lastUpd" class="last-upd" title=""></span>
     <div class="actions">
-      <button class="btn" onclick="exportWithData()">↓ 내보내기</button>
       <button class="btn btn--primary" onclick="openInput()">+ 직접 입력</button>
-      <button class="btn btn--icon" onclick="openSettings()" title="설정">⚙</button>
+      <div class="more">
+        <button class="btn btn--icon" onclick="toggleMore(event)" title="더보기">⋯</button>
+        <div class="range-menu more-menu" id="moreMenu" onclick="event.stopPropagation()">
+          <button onclick="closeMore();exportWithData()">↓ 데이터 내보내기</button>
+          <button onclick="closeMore();openSettings()">⚙ 데이터 업로드 · 설정</button>
+        </div>
+      </div>
     </div>
   </div>
 </header>
@@ -407,9 +415,11 @@ function restoreUi(){try{const s=JSON.parse(localStorage.getItem(UI_KEY)||'{}');
 function setRange(m){range.mode=m;range.offset=0;if(m!=='custom'){range.start=range.end=null;}closeRange();saveUi();render();}
 function applyCustom(){const s=$('#cStart').value,e=$('#cEnd').value;if(!s||!e)return alert('시작일과 종료일을 모두 선택하세요');if(s>e)return alert('시작일이 종료일보다 늦습니다');range.mode='custom';range.start=s;range.end=e;range.offset=0;closeRange();saveUi();render();}
 function shiftRange(dir){if(range.mode==='all'||range.mode==='custom')return;const R=computeRange();range.offset-=dir*R.weeks.length;saveUi();render();}
-function toggleRange(ev){ev.stopPropagation();$('#rangeMenu').classList.toggle('open');}
+function toggleRange(ev){ev.stopPropagation();closeMore();$('#rangeMenu').classList.toggle('open');}
 function closeRange(){$('#rangeMenu').classList.remove('open');}
-document.addEventListener('click',closeRange);
+function toggleMore(ev){ev.stopPropagation();closeRange();$('#moreMenu').classList.toggle('open');}
+function closeMore(){const m=$('#moreMenu');if(m)m.classList.remove('open');}
+document.addEventListener('click',()=>{closeRange();closeMore();});
 function toggleAcc(id){document.getElementById(id).classList.toggle('open');}
 
 /* ════════ 4. RENDER ════════ */
@@ -706,7 +716,7 @@ function checkStale(){if(!__LAST_UPDATED__||__LAST_UPDATED__==='—')return;cons
 loadData();
 restoreUi();
 checkStale();
-if($('#lastUpd'))$('#lastUpd').textContent='⟳ 최근 업데이트 '+__LAST_UPDATED__;
+if($('#lastUpd')&&__LAST_UPDATED__&&__LAST_UPDATED__!=='—'){const el=$('#lastUpd');const m=__LAST_UPDATED__.match(/(\d+)월\s*(\d+)일(?:\s*([\d:]+))?/);el.textContent=m?`⟳ ${m[1]}/${m[2]}${m[3]?' '+m[3]:''}`:'⟳ '+__LAST_UPDATED__;el.title='최근 업데이트 '+__LAST_UPDATED__;}
 render();
 syncCalendar();
 </script>
