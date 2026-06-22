@@ -597,9 +597,10 @@ function renderContribution(R){
 function engStr(sec,pv){if(!pv||!sec)return'—';const a=Math.round(sec/pv),m=Math.floor(a/60),s=a%60;return `${m}:${String(s).padStart(2,'0')}`;}
 function renderRoi(weeks){
   // 캘린더 제목 매칭(매칭률 0) 대신 실제 성과 데이터를 직접 사용 — 랭킹과 동일 소스, 채널별 2카드
-  // ── Blog: blog_posts를 path별 집계, 조회수 상위 ──
+  // ── Blog: blog_posts를 제목별 집계 (같은 글이 /slug·/ 두 경로로 잡히는 중복 병합), 조회수 상위 ──
   const bmap={};
-  weeks.forEach(w=>(DB[w]?.blog_posts||[]).forEach(p=>{if(isNavPage(p))return;const k=(p.path&&p.path!=='/')?p.path:(p.title||'');if(!k)return;if(!bmap[k])bmap[k]={title:p.title||p.path,pv:0,eng:0};bmap[k].pv+=p.pageviews||0;bmap[k].eng+=p.engTime||0;}));
+  const normT=t=>String(t||'').replace(/\s*[-–]\s*앳홈 블로그\s*$/,'').trim();
+  weeks.forEach(w=>(DB[w]?.blog_posts||[]).forEach(p=>{if(isNavPage(p))return;const title=normT(p.title);const k=title.toLowerCase()||p.path;if(!k)return;if(!bmap[k])bmap[k]={title:title||p.path,pv:0,eng:0};bmap[k].pv+=p.pageviews||0;bmap[k].eng+=p.engTime||0;}));
   const blog=Object.values(bmap).sort((a,b)=>(b.pv||0)-(a.pv||0));
   $('#roiBlogSub').textContent=blog.length?`${blog.length}개 중 상위 ${Math.min(8,blog.length)}`:'';
   $('#roiBlogBody').innerHTML=blog.length
