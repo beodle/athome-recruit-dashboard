@@ -143,9 +143,17 @@ PYEOF
 # ── 2.5 LinkedIn 수집 (env 있을 때만: 노출·게시물·팔로워) ──
 if [ -n "${LINKEDIN_REFRESH_TOKEN:-}" ]; then
   echo "→ LinkedIn 수집..."
-  python3 linkedin_fetch.py || echo "⚠️ LinkedIn 수집 실패 — GA4만 반영"
+  python3 linkedin_fetch.py || echo "⚠️ LinkedIn 수집 실패 — 건너뜀"
 else
-  echo "→ LinkedIn env 없음, 건너뜀 (GA4만 갱신)"
+  echo "→ LinkedIn env 없음, 건너뜀"
+fi
+
+# ── 2.6 YouTube 팟캐스트 수집 (env 있을 때: 구독자·홈레코딩 영상) ──
+if [ -n "${YOUTUBE_API_KEY:-}" ]; then
+  echo "→ YouTube 수집..."
+  python3 youtube_fetch.py || echo "⚠️ YouTube 수집 실패 — 건너뜀"
+else
+  echo "→ YouTube env 없음, 건너뜀"
 fi
 
 # ── 3. 커밋·푸시 ──────────────────────────────────────────

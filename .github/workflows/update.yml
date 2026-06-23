@@ -43,4 +43,5 @@ jobs:
           LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
           LINKEDIN_REFRESH_TOKEN: ${{ secrets.LINKEDIN_REFRESH_TOKEN }}
           LINKEDIN_ORG_URN: urn:li:organization:90478773
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: bash update.sh
