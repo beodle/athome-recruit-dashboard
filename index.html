@@ -118,6 +118,8 @@ tbody tr:hover td{background:var(--bg-soft);}
 .roi-grid table{table-layout:fixed;width:100%;}
 .roi-grid th,.roi-grid td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .roi-grid th:not(:first-child),.roi-grid td:not(:first-child){width:84px;}
+.roi-grid td.ell{cursor:default;}
+.roi-tip{position:fixed;display:none;z-index:300;background:#1A1A1A;color:#fff;padding:7px 11px;border-radius:7px;font-size:12px;line-height:1.45;max-width:380px;box-shadow:0 8px 24px rgba(0,0,0,.22);pointer-events:none;}
 
 /* ── ACCORDION ── */
 .acc{margin-top:12px;border-top:1px solid var(--border);}
@@ -746,6 +748,16 @@ checkStale();
 if($('#lastUpd')&&__LAST_UPDATED__&&__LAST_UPDATED__!=='—'){const el=$('#lastUpd');const m=__LAST_UPDATED__.match(/(\d+)월\s*(\d+)일(?:\s*([\d:]+))?/);el.textContent=m?`⟳ ${m[1]}/${m[2]}${m[3]?' '+m[3]:''}`:'⟳ '+__LAST_UPDATED__;el.title='최근 업데이트 '+__LAST_UPDATED__;}
 render();
 syncCalendar();
+
+// 잘린 제목 호버 → 즉시 전문 툴팁 (기본 title은 hover 동안 제거해 중복 방지)
+(function(){
+  const grid=document.querySelector('.roi-grid');if(!grid)return;
+  let tip=document.getElementById('roiTip');
+  if(!tip){tip=document.createElement('div');tip.id='roiTip';tip.className='roi-tip';document.body.appendChild(tip);}
+  grid.addEventListener('mouseover',e=>{const td=e.target.closest('td.ell');if(!td)return;const full=td.getAttribute('title')||td.textContent.trim();if(!full)return;td._full=td.getAttribute('title');td.removeAttribute('title');tip.textContent=full;tip.style.display='block';});
+  grid.addEventListener('mousemove',e=>{if(tip.style.display!=='block')return;let x=e.clientX+14,y=e.clientY+16;if(x+tip.offsetWidth>innerWidth-8)x=innerWidth-tip.offsetWidth-8;tip.style.left=x+'px';tip.style.top=y+'px';});
+  grid.addEventListener('mouseout',e=>{const td=e.target.closest('td.ell');if(td&&td._full)td.setAttribute('title',td._full);tip.style.display='none';});
+})();
 </script>
 </body>
 </html>
