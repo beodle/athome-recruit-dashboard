@@ -114,6 +114,10 @@ tbody tr:hover td{background:var(--bg-soft);}
 .tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;background:var(--bg-soft);color:var(--text-3);}
 .up-i{color:var(--up);font-size:10px;font-weight:700;margin-left:3px;} .down-i{color:var(--down);font-size:10px;font-weight:700;margin-left:3px;}
 .ell{max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* ② 콘텐츠 기여 3카드: 좁아져도 숫자가 카드 밖으로 안 나가게 고정 레이아웃 */
+.roi-grid table{table-layout:fixed;width:100%;}
+.roi-grid th,.roi-grid td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.roi-grid th:not(:first-child),.roi-grid td:not(:first-child){width:84px;}
 
 /* ── ACCORDION ── */
 .acc{margin-top:12px;border-top:1px solid var(--border);}
@@ -241,7 +245,7 @@ tbody tr:hover td{background:var(--bg-soft);}
   <!-- ② 콘텐츠 기여 -->
   <section class="sec">
     <div class="sec-head"><span class="sec-no">02</span><span class="sec-title">콘텐츠 기여</span><span class="sec-desc">무엇이 먹혔나 → 다음 액션</span><span class="sec-pub" id="pubCount"></span></div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px">
+    <div class="roi-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px">
       <div class="card pad">
         <div class="card-h"><div class="dot" style="background:var(--blog)"></div><span class="t">Blog 성과 TOP</span><span class="sub" id="roiBlogSub"></span></div>
         <table>
