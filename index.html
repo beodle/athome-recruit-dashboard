@@ -605,7 +605,8 @@ function renderContribution(R){
     const curPub=calCur.length;
     const liN=calCur.filter(e=>e.channel==='linkedin').length;
     const blN=calCur.filter(e=>e.channel==='blog'||e.channel==='블로그').length;
-    pubEl.innerHTML=curPub?`이번 기간 발행 ${curPub}건 · LI ${liN} · Blog ${blN}`:'이번 기간 발행 없음';
+    const ptN=calCur.filter(e=>e.channel==='podcast').length;
+    pubEl.innerHTML=curPub?`이번 기간 발행 ${curPub}건 · LI ${liN} · Blog ${blN} · 팟캐스트 ${ptN}`:'이번 기간 발행 없음';
   }
   // 게시물 성과: Blog/LinkedIn 2카드 (통합 랭킹과 중복되어 통합 랭킹 제거)
   renderRoi(weeks);
@@ -738,7 +739,7 @@ function finishImport(st,msg){saveData();render();st.textContent=msg;}
 
 /* ════════ 8. SOURCE SYNC ════════ */
 const CALENDAR_CSV_URL='https://docs.google.com/spreadsheets/d/1bnLQypIuMb0gw0RxzwYVkqGBdN8KSA4_TXSuogaOWak/export?format=csv&gid=658998951';
-function normChannel(ch){const s=(ch||'').trim().toLowerCase();if(s.includes('링크드')||s==='linkedin')return'linkedin';if(s.includes('블로그')||s==='blog')return'blog';if(s.includes('채용')||s.includes('recruit'))return'recruit';return s||'other';}
+function normChannel(ch){const s=(ch||'').trim().toLowerCase();if(s.includes('링크드')||s==='linkedin')return'linkedin';if(s.includes('블로그')||s==='blog')return'blog';if(s.includes('채용')||s.includes('recruit'))return'recruit';if(s.includes('팟캐스트')||s.includes('홈레코딩')||s==='podcast')return'podcast';return s||'other';}
 async function syncCalendar(){try{const res=await fetch(CALENDAR_CSV_URL,{cache:'no-store'});if(!res.ok)throw 0;const{data}=Papa.parse(await res.text(),{header:true,skipEmptyLines:true});const ev=data.map(r=>({date:(r['시기']||'').trim(),title:(r['주요 주제']||'').trim(),channel:normChannel(r['채널']),url:(r['URL']||r['url']||r['링크']||'').trim()})).filter(e=>e.date&&e.title);if(ev.length){DB['__calendar__']=ev;render();}}catch(e){console.warn('[calendar] sync skip');}}
 
 /* ════════ 9. STALE ════════ */
