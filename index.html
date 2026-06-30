@@ -567,7 +567,7 @@ function renderAwareness(R){
         {type:'line',label:'블로그 조회',data:weeks.map(w=>DB[w]?.blog_pageviews||0),borderColor:'#9A958C',borderWidth:1.8,pointRadius:2.5,tension:.3,yAxisID:'y',order:2},
         {type:'line',label:'팔로워(누적)',data:weeks.map(w=>DB[w]?.followers||null),borderColor:'#FF5D00',borderWidth:2.4,pointRadius:3,tension:.3,spanGaps:true,yAxisID:'y1',order:1},
       ]},
-      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:LEGEND,tooltip:TOOLTIP,annotation:{annotations:ann}},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:LEGEND,tooltip:{...TOOLTIP,callbacks:{title:(it)=>{const w=weeks[it[0].dataIndex];return w?`${weekLabel(w)} · ${mdLabel(w)}~${mdLabel(w,true)}`:'';}}},annotation:{annotations:ann}},
         scales:{x:{grid:{color:'#F1F0ED'},ticks:TICK},y:{position:'left',grid:{color:'#F1F0ED'},ticks:{...TICK,callback:v=>fmt(v)}},y1:{position:'right',grid:{drawOnChartArea:false},ticks:{...TICK,callback:v=>fmt(v)}}}}
     });
   }
